@@ -23,6 +23,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
+
+
 // Check abspath exists or not.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -50,5 +52,7 @@ if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 	return;
 }
 
-\Slc\SeoLinksCrawler\Admin\adminpage::init();
+// $adminObj = new \Slc\SeoLinksCrawler\Admin\adminpage();
 
+$container = new Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
+new \Slc\SeoLinksCrawler\Admin\adminpage($container);

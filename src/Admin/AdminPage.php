@@ -1,19 +1,39 @@
 <?php
 namespace Slc\SeoLinksCrawler\Admin;
 
+use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
+
+
 /**
  *  Main class
  **/
 class AdminPage {
 
+	private $crawler;
+    private $transient_cache;
+	private $filesystem;
+	// private $dom_document_parser;
+	private $links_finder;
+	// private $container;
+
 	/**
 	 * Initiate class.
 	 */
-	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'slc_register_page' ] );
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'slc_admin_assets' ] );
-		add_action( 'wp_ajax_slc_admin_display_links', [ __CLASS__, 'slc_admin_display_links' ] );
+	public function __construct(SeoLinksCrawlerContainer $container) {
+		// $this->register_dependencies();
+		// $container->register_dependencies();
+		
+		// $this->container = $container;
+        $this->transient_cache = $container->get('TransientCache');
+		$this->filesystem = $container->get('FilesystemReader');
+		// $this->dom_document_parser = $container->get('DomDocumentParser');
+		$this->links_finder = $container->get('LinksFinder', $this->filesystem, $container->get('DomDocumentParser'));
+		$this->crawler = $container->get('Crawler',$this->filesystem,$this->links_finder,$this->transient_cache);
+		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
+		
 	}
+
 
 	public function slc_register_page() {
 		add_menu_page(
@@ -21,7 +41,7 @@ class AdminPage {
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			'manage_options',
 			'seo-links-crawler',
-			[ __CLASS__, 'slc_page_handler' ],
+			[ $this, 'slc_page_handler' ],
 			'dashicons-tagcloud',
 			''
 		);
@@ -33,10 +53,14 @@ class AdminPage {
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
-		\Slc\SeoLinksCrawler\Admin\adminpage::init();
-		$t = new \Slc\SeoLinksCrawler\FilesystemReader();
-		$r = $t->get_file_content( 'http://localhost/wp-demo' );
-		var_dump( $r );
+		// $t = new \Slc\SeoLinksCrawler\File_Reader\FilesystemReader();
+		// $t = $this->get('FilesystemReader');
+		// var_dump($this->filesystem);
+		// $r = $this->filesystem->get_file_content( \get_home_url() );
+		// $parser = new \Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser();
+		// $this->dom_document_parser->loadHTMLDocument($r);
+
+		// var_dump($this->dom_document_parser->gather_links()) ;
 
 	}
 
@@ -63,9 +87,5 @@ class AdminPage {
 			);
 		}
 	}
-
-	public function slc_admin_display_links() {
-		check_ajax_referer( 'slc-admin', 'nonce' );
-		var_dump( $_POST );
-	}
+	
 }

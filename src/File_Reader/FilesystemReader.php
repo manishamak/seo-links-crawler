@@ -1,6 +1,6 @@
 <?php
 
-namespace Slc\SeoLinksCrawler;
+namespace Slc\SeoLinksCrawler\File_Reader;
 
 class FilesystemReader {
 
@@ -38,5 +38,26 @@ class FilesystemReader {
 		// $file_content = \file_get_contents( $file_path );
 
 		return $file_content;
+	}
+
+
+	public function put_file_content( $file_path, $file_content ) {
+		if ( ! $this->filesystem ) {
+			return false;
+		}
+
+		$file_status = $this->filesystem->put_contents( $file_path, $file_content );
+
+		return $file_status;
+	}
+
+	public function delete_file( $file_path ) {
+		if ( ! $this->filesystem ) {
+			return false;
+		}
+
+		$file_status = $this->filesystem->delete( $file_path );
+
+		return $file_status;
 	}
 }
