@@ -10,30 +10,34 @@ use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
 class AdminPage {
 
 	private $crawler;
-    private $transient_cache;
-	private $filesystem;
+    // private $filesystem_cache;
+	// private $filesystem;
 	// private $dom_document_parser;
-	private $links_finder;
+	// private $links_finder;
 	// private $container;
 
 	/**
 	 * Initiate class.
 	 */
 	public function __construct(SeoLinksCrawlerContainer $container) {
+		
 		// $this->register_dependencies();
 		// $container->register_dependencies();
 		
 		// $this->container = $container;
-        $this->transient_cache = $container->get('TransientCache');
-		$this->filesystem = $container->get('FilesystemReader');
+        // $this->filesystem_cache = $container->get('FilesystemCache');
+		$filesystem_obj = $container->get('FilesystemReader');
 		// $this->dom_document_parser = $container->get('DomDocumentParser');
-		$this->links_finder = $container->get('LinksFinder', $this->filesystem, $container->get('DomDocumentParser'));
-		$this->crawler = $container->get('Crawler',$this->filesystem,$this->links_finder,$this->transient_cache);
+		$links_finder_obj = $container->get('LinksFinder', $filesystem_obj, $container->get('DomDocumentParser'));
+		$this->crawler = $container->get('Crawler', $filesystem_obj, $links_finder_obj, $container->get('FilesystemCache', $filesystem_obj) );
 		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
-		
+		add_action('plugins_loaded', array($this, 'load_textdomain'));
 	}
 
+	public function load_textdomain() {
+        load_plugin_textdomain('seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages');
+    }
 
 	public function slc_register_page() {
 		add_menu_page(
@@ -43,7 +47,7 @@ class AdminPage {
 			'seo-links-crawler',
 			[ $this, 'slc_page_handler' ],
 			'dashicons-tagcloud',
-			''
+			'6'
 		);
 	}
 
@@ -53,6 +57,7 @@ class AdminPage {
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
+		// $this->crawler->slc_admin_display_links();
 		// $t = new \Slc\SeoLinksCrawler\File_Reader\FilesystemReader();
 		// $t = $this->get('FilesystemReader');
 		// var_dump($this->filesystem);
@@ -78,6 +83,7 @@ class AdminPage {
 				'ajaxurl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'slc-admin' ),
 				'loading' => esc_html__( 'Loading', 'seo-links-crawler' ),
+				'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' )
 			];
 
 			wp_localize_script(

@@ -1,5 +1,7 @@
 <?php
 namespace Slc\SeoLinksCrawler;
+use Slc\SeoLinksCrawler\File_Reader\FilesystemReader;
+use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
 
 /**
  *  Class for Scanning links from web pages.
@@ -37,14 +39,14 @@ class LinksFinder {
 		$file_content = $this->filesystem->get_file_content( $page_url );
 
 		if ( ! $file_content ){
-			return new WP_Error( 'scan_page_error', esc_html__( 'An error occurred while scanning the page. Please try again later.', 'seo-links-crawler' ) );
+			return new \WP_Error( 'scan_page_error', esc_html__( 'An error occurred while scanning the page. Please try again later.', 'seo-links-crawler' ) );
 		}
 
 		$this->dom_document_parser->loadHTMLDocument( $file_content );
 
 		$links = $this->dom_document_parser->gather_links();
 		if ( empty( $links ) ){
-			return new WP_Error( 'no_links_found', esc_html__( 'No links found in the page.', 'seo-links-crawler' ) );
+			return new \WP_Error( 'no_links_found', esc_html__( 'No links found in the page.', 'seo-links-crawler' ) );
 		}
 		$internal_links = array_filter($links, function($link){
 			$parsed_link = \wp_parse_url($link);

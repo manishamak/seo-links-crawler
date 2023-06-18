@@ -21,10 +21,26 @@
 			nonce: slcAdminObj.nonce,
 		};
 
-		$.post( slcAdminObj.ajaxurl, data, function ( res ) {
-			$( '.slc-links-wrap' ).html( res );
+		var ajaxcall = $.post( slcAdminObj.ajaxurl, data)
+			.done( function ( res ) {
+				let html;
+				if(res.success){
+					html = '<ul>';
+					var obj = res.data;
+					Object.keys(obj).forEach(function(k){
+						html += '<li><a href='+obj[k]+'>'+obj[k]+'</a></li>';
+					});
+					html += '</ul>';
+				}else{
+					html = res.data;
+				}
+				$( '.slc-links-wrap' ).html( html );
+			// console.log(res);
 		} ).fail( function ( xhr ) {
 			console.log( xhr.responseText );
-		} );
+		} ).always(function() {
+			$btn.removeClass( 'loading disabled' );
+			$btn.text( slcAdminObj.resetBtnText );
+		  });
     })
 })( document, jQuery);

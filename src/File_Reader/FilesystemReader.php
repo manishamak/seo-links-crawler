@@ -41,12 +41,12 @@ class FilesystemReader {
 	}
 
 
-	public function put_file_content( $file_path, $file_content ) {
+	public function put_file_content( $file_path, $file_content, $mode = false ) {
 		if ( ! $this->filesystem ) {
 			return false;
 		}
 
-		$file_status = $this->filesystem->put_contents( $file_path, $file_content );
+		$file_status = $this->filesystem->put_contents( $file_path, $file_content, $mode );
 
 		return $file_status;
 	}
