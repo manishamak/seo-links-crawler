@@ -60,4 +60,14 @@ class FilesystemReader {
 
 		return $file_status;
 	}
+
+	public function file_exists( $file_path ) {
+		if ( ! $this->filesystem ) {
+			return false;
+		}
+
+		$file_status = $this->filesystem->exists( $file_path );
+
+		return $file_status;
+	}
 }

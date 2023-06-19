@@ -21,18 +21,11 @@ class FilesystemCache {
 
   public function cache_data($data) {
     $serialized_data = serialize($data);
-    // $cache_file = $this->get_cache_file_path();
-
-    // global $wp_filesystem;
-    // WP_Filesystem();
-    $this->filesystem->put_file_content($this->cache_file_path, $serialized_data, FS_CHMOD_FILE);
+    $status = $this->filesystem->put_file_content($this->cache_file_path, $serialized_data, FS_CHMOD_FILE);
+    return $status;
   }
 
   public function get_cache_data() {
-    // $cache_file = $this->get_cache_file_path();
-
-    // global $wp_filesystem;
-    // WP_Filesystem();
     $cachedData = $this->filesystem->get_file_content($this->cache_file_path);
 
     return $cachedData ? unserialize($cachedData) : $cachedData;
@@ -48,9 +41,4 @@ class FilesystemCache {
       $this->filesystem->delete_file($this->cache_file_path);
     // }
   }
-
-  // private function get_cache_file_path() {
-  //   $filename = 'cached-home-connected-links-' . time() . '.txt';
-  //   return $this->cache_directory . $filename;
-  // }
 }

@@ -4,10 +4,11 @@ namespace Slc\SeoLinksCrawler\Cron;
 use Slc\SeoLinksCrawler\Cache\FilesystemCache;
 use Slc\SeoLinksCrawler\LinksFinder;
 use Slc\SeoLinksCrawler\File_Reader\FilesystemReader;
-// use Slc\SeoLinksCrawler\
 
 // Define a class to handle WP Cron tasks
 class Crawler {
+
+    public const sitemap_html_path = SLC_PLUGIN_PATH. '/templates/sitemap.html';
 
     private $filesystem;
 
@@ -18,7 +19,11 @@ class Crawler {
     // private $container;
   
   // Constructor method
-  public function __construct(FilesystemReader $filesystem, LinksFinder $links_finder, FilesystemCache $filesystem_cache) {
+  public function __construct(
+    FilesystemReader $filesystem, 
+    LinksFinder $links_finder, 
+    FilesystemCache $filesystem_cache
+    ) {
     $this->filesystem = $filesystem;
     $this->links_finder = $links_finder;
     $this->filesystem_cache = $filesystem_cache;
@@ -26,49 +31,69 @@ class Crawler {
     // Schedule the cron event
     add_action('slc_crawl_internal_links_scheduler', array($this, 'slc_execute_crawling'));
   }
-  
 
-  // public static function initiate_crawler(){
-  //   $this->execute_crawling();
-  //   // self
-  //   // $this->container = $container;
-  //   // add_action('slc_crawl_internal_links_scheduler', array($this, 'slc_crawl_links_callback'));
-  // }
-
-  // Cron callback function
-  // public function slc_crawl_links_callback() {
-  //   $this->execute_crawling();
-
-  //   // Perform your cron task here
-  //   // This function will be executed when the 'slc_crawl_internal_links_scheduler' event is triggered
-  // }
-  
+  public function get_home(){
+    return \get_home_url();
+  }
   
   public function slc_execute_crawling(){
-    // $this->schedule_cron();
-    $page_to_scan = \get_home_url();
+    $this->schedule_cron();
     try {
         $this->filesystem_cache->initiate_cache();
+
         $this->filesystem_cache->clean_up_cache();
-        $links_result = $this->links_finder->create_internal_links($page_to_scan);
+
+        $this->filesystem->delete_file(self::sitemap_html_path);
+        
+        $links_result = $this->links_finder->create_internal_links($this->get_home());
         if ( is_wp_error( $links_result ) ){
-          throw new \Exception($links_result->get_error_message());
-          // return new WP_Error( 'no_internal_links_found', esc_html__( 'No internal links found.', 'seo-links-crawler' ) );
+          throw new \Exception( $links_result->get_error_message() );
         }
         if ( empty ( $links_result ) ){
           throw new \Exception( esc_html__( 'No internal links found.', 'seo-links-crawler' ) );
         }
-        $this->filesystem_cache->cache_data($links_result);
+
+        try {
+          $data_cached = $this->filesystem_cache->cache_data($links_result);
+          if (! $data_cached){
+            throw new \Exception( esc_html__( 'There is an error in storing the crawling results in cache. Please check the permission of wp-content/slc-cache folder.', 'seo-links-crawler' ) );
+          }
+        
+          $is_home_created = $this->save_home_page_as_html();
+          if (! $is_home_created){
+            throw new \Exception( esc_html__( 'There is some error in creating home.html. Please check active theme folder permission.', 'seo-links-crawler' ) );
+          }
+
+          $is_sitemap_created = $this->create_sitemap_html($links_result);
+          if (! $is_sitemap_created){
+            throw new \Exception( esc_html__( 'There is some error in creating sitemap.html. Please try again later.', 'seo-links-crawler' ) );
+          }
+        } catch (\Exception $e){
+          // error handling
+          error_log('Crawler file creation failed: ' . $e->getMessage());
+        }
+
         return $links_result;
 
-        // $this->container->get('TransientCache');
-        // $this->container->get('FilesystemReader');
-        // $this->container->get('LinksFinder');
     } catch (\Exception $e){
         // error handling
         error_log('Cron task failed: ' . $e->getMessage());
         return new \WP_Error('crawl_error', $e->getMessage());
     }
+  }
+
+  private function create_sitemap_html($results){
+      require SLC_PLUGIN_PATH. '/templates/sitemap.php';
+      $sitemap_created = $this->filesystem->put_file_content(self::sitemap_html_path, $sitemap_structure);
+      return $sitemap_created;
+  }
+
+  private function save_home_page_as_html(){
+    $new_home_file_name = $this->filesystem->file_exists(get_stylesheet_directory().'/home.html') ? '/home-slc.html' : '/home.html';
+    $new_home_file_path = get_stylesheet_directory().$new_home_file_name;
+    $home_contents = $this->filesystem->get_file_content( $this->get_home() );
+    $file_created = $this->filesystem->put_file_content( $new_home_file_path, $home_contents );
+    return $file_created;
   }
 
   // on button click call
@@ -82,18 +107,10 @@ class Crawler {
     }
     $json_success = ! $cached_links ? $results : $cached_links;
     wp_send_json_success($json_success);
-    // if (! $cached_links){
-      
-    // }else{
-    //   wp_send_json_success($cached_links);
-    // }
-    //get_transient data
-    // wp_send_json(transient_data)
-		// var_dump( $_POST );
 	}
 
   // Method to schedule the cron event
-  public function schedule_cron() {
+  private function schedule_cron() {
     // Use WP Cron to schedule the event
     if (!wp_next_scheduled('slc_crawl_internal_links_scheduler')) {
       wp_schedule_event(time(), 'hourly', 'slc_crawl_internal_links_scheduler');

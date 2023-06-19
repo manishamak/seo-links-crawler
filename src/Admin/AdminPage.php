@@ -57,7 +57,7 @@ class AdminPage {
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
-		// $this->crawler->slc_admin_display_links();
+		// $this->crawler->slc_execute_crawling();
 		// $t = new \Slc\SeoLinksCrawler\File_Reader\FilesystemReader();
 		// $t = $this->get('FilesystemReader');
 		// var_dump($this->filesystem);
