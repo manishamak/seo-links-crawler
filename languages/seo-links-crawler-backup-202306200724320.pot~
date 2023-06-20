@@ -1,0 +1,79 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Seo Links Crawler\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-06-20 07:19+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.6.4; wp-6.2.2\n"
+"X-Domain: seo-links-crawler"
+
+#: src/LinksFinder.php:43
+msgid "An error occurred while scanning the page. Please try again later."
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"Crawl and display all internal links to admin and generates sitemap.html"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://profiles.wordpress.org/manishamakhija/"
+msgstr ""
+
+#: src/Admin/AdminPage.php:93
+msgid "Loading"
+msgstr ""
+
+#. Author of the plugin
+msgid "Manisha Makhija"
+msgstr ""
+
+#: src/Cron/Crawler.php:54
+msgid "No internal links found."
+msgstr ""
+
+#: src/LinksFinder.php:50
+msgid "No links found in the page."
+msgstr ""
+
+#: src/Autoloader.php:41
+msgid "Please install composer."
+msgstr ""
+
+#: src/Admin/AdminPage.php:44 src/Admin/AdminPage.php:45
+#: src/Admin/AdminPage.php:56
+msgid "SEO Links Crawler"
+msgstr ""
+
+#. Name of the plugin
+msgid "Seo Links Crawler"
+msgstr ""
+
+#: src/Admin/AdminPage.php:57 src/Admin/AdminPage.php:94
+msgid "Start Crawler"
+msgstr ""
+
+#: src/Cron/Crawler.php:60
+msgid ""
+"There is an error in storing the crawling results in cache. Please check the "
+"permission of wp-content/slc-cache folder."
+msgstr ""
+
+#: src/Cron/Crawler.php:65
+msgid ""
+"There is some error in creating home.html. Please check active theme folder "
+"permission."
+msgstr ""
+
+#: src/Cron/Crawler.php:70
+msgid "There is some error in creating sitemap.html. Please try again later."
+msgstr ""

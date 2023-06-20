@@ -55,4 +55,4 @@ if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 // $adminObj = new \Slc\SeoLinksCrawler\Admin\adminpage();
 
 $container = new Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
-new \Slc\SeoLinksCrawler\Admin\adminpage($container);
+new \Slc\SeoLinksCrawler\Admin\adminpage( $container );

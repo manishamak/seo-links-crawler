@@ -10,7 +10,7 @@ use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
 class AdminPage {
 
 	private $crawler;
-    // private $filesystem_cache;
+	// private $filesystem_cache;
 	// private $filesystem;
 	// private $dom_document_parser;
 	// private $links_finder;
@@ -19,25 +19,25 @@ class AdminPage {
 	/**
 	 * Initiate class.
 	 */
-	public function __construct(SeoLinksCrawlerContainer $container) {
-		
+	public function __construct( SeoLinksCrawlerContainer $container ) {
+
 		// $this->register_dependencies();
 		// $container->register_dependencies();
-		
+
 		// $this->container = $container;
-        // $this->filesystem_cache = $container->get('FilesystemCache');
-		$filesystem_obj = $container->get('FilesystemReader');
+		// $this->filesystem_cache = $container->get('FilesystemCache');
+		$filesystem_obj = $container->get( 'FilesystemReader' );
 		// $this->dom_document_parser = $container->get('DomDocumentParser');
-		$links_finder_obj = $container->get('LinksFinder', $filesystem_obj, $container->get('DomDocumentParser'));
-		$this->crawler = $container->get('Crawler', $filesystem_obj, $links_finder_obj, $container->get('FilesystemCache', $filesystem_obj) );
+		$links_finder_obj = $container->get( 'LinksFinder', $filesystem_obj, $container->get( 'DomDocumentParser' ) );
+		$this->crawler    = $container->get( 'Crawler', $filesystem_obj, $links_finder_obj, $container->get( 'FilesystemCache', $filesystem_obj ) );
 		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
-		add_action('plugins_loaded', array($this, 'load_textdomain'));
+		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
 	}
 
 	public function load_textdomain() {
-        load_plugin_textdomain('seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages');
-    }
+		load_plugin_textdomain( 'seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages' );
+	}
 
 	public function slc_register_page() {
 		add_menu_page(
@@ -53,7 +53,9 @@ class AdminPage {
 
 	public function slc_page_handler(){ ?>
 		<div class="slc-wrap">
-			<button class="slc-button"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></button>
+		<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
+		<a href="#" class="slc-button-action"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
+			<!-- <button class=""><?php // echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></button> -->
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
@@ -66,7 +68,6 @@ class AdminPage {
 		// $this->dom_document_parser->loadHTMLDocument($r);
 
 		// var_dump($this->dom_document_parser->gather_links()) ;
-
 	}
 
 	public function slc_admin_assets() {
@@ -79,11 +80,18 @@ class AdminPage {
 				false
 			);
 
+			wp_enqueue_style(
+				'slc-admin-style',
+				SLC_PLUGIN_URL . '/assets/css/admin-settings.css',
+				[],
+				SLC_VERSION
+			);
+
 			$settings = [
-				'ajaxurl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'slc-admin' ),
-				'loading' => esc_html__( 'Loading', 'seo-links-crawler' ),
-				'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' )
+				'ajaxurl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'slc-admin' ),
+				'loading'      => esc_html__( 'Loading', 'seo-links-crawler' ),
+				'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' ),
 			];
 
 			wp_localize_script(
@@ -93,5 +101,5 @@ class AdminPage {
 			);
 		}
 	}
-	
+
 }

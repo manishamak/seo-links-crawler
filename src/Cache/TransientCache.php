@@ -16,18 +16,18 @@ class TransientCache {
 	 * @var string
 	 */
 	private $transient_key;
-	
+
 	/**
 	 * TransientCache constructor.
 	 *
 	 * @param string $transient_key  key using which cache data is stored.
 	 */
 	// public function __construct( string $transient_key ) {
-	// 	$this->prefix = 'slc_';
+	// $this->prefix = 'slc_';
 	// }
 
-	public function set_transient_key( string $transient_key ){
-		$prefix = 'slc_';
+	public function set_transient_key( string $transient_key ) {
+		$prefix              = 'slc_';
 		$this->transient_key = $prefix . $transient_key;
 	}
 
