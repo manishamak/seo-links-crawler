@@ -3,42 +3,50 @@ namespace Slc\SeoLinksCrawler\Admin;
 
 use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
 
+defined( 'ABSPATH' ) || exit;
 
 /**
- *  Main class
+ *  Admin page settings class.
  **/
 class AdminPage {
 
-	private $crawler;
-	// private $filesystem_cache;
-	// private $filesystem;
-	// private $dom_document_parser;
-	// private $links_finder;
-	// private $container;
-
 	/**
-	 * Initiate class.
+	 * Create instances of the classes.
+	 *
+	 * @param SeoLinksCrawlerContainer $container Instance of the container.
 	 */
 	public function __construct( SeoLinksCrawlerContainer $container ) {
 
-		// $this->register_dependencies();
-		// $container->register_dependencies();
-
-		// $this->container = $container;
-		// $this->filesystem_cache = $container->get('FilesystemCache');
-		$filesystem_obj = $container->get( 'FilesystemReader' );
-		// $this->dom_document_parser = $container->get('DomDocumentParser');
-		$links_finder_obj = $container->get( 'LinksFinder', $filesystem_obj, $container->get( 'DomDocumentParser' ) );
-		$this->crawler    = $container->get( 'Crawler', $filesystem_obj, $links_finder_obj, $container->get( 'FilesystemCache', $filesystem_obj ) );
+		$filesystem_obj   = $container->get( 'WPFilesystem' );
+		$links_finder_obj = $container->get(
+			'LinksFinder',
+			$filesystem_obj,
+			$container->get( 'DomDocumentParser' )
+		);
+		$container->get(
+			'Crawler',
+			$filesystem_obj,
+			$links_finder_obj,
+			$container->get(
+				'FilesystemCache',
+				$filesystem_obj
+			)
+		);
 		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
 		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
 	}
 
+	/**
+	 *  Loads a plugin’s translated strings.
+	 */
 	public function load_textdomain() {
 		load_plugin_textdomain( 'seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages' );
 	}
 
+	/**
+	 *  Adds settings page in admin dashboard.
+	 */
 	public function slc_register_page() {
 		add_menu_page(
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
@@ -46,31 +54,27 @@ class AdminPage {
 			'manage_options',
 			'seo-links-crawler',
 			[ $this, 'slc_page_handler' ],
-			'dashicons-tagcloud',
-			'6'
+			'dashicons-tagcloud'
 		);
 	}
 
+	/**
+	 *  Admin settings page callback function.
+	 */
 	public function slc_page_handler(){ ?>
 		<div class="slc-wrap">
-		<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
-		<a href="#" class="slc-button-action"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
-			<!-- <button class=""><?php // echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></button> -->
+			<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
+			<a href="#" class="slc-button-action"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
-		// $this->crawler->slc_execute_crawling();
-		// $t = new \Slc\SeoLinksCrawler\File_Reader\FilesystemReader();
-		// $t = $this->get('FilesystemReader');
-		// var_dump($this->filesystem);
-		// $r = $this->filesystem->get_file_content( \get_home_url() );
-		// $parser = new \Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser();
-		// $this->dom_document_parser->loadHTMLDocument($r);
-
-		// var_dump($this->dom_document_parser->gather_links()) ;
 	}
 
+	/**
+	 *  Includes assets in Admin settings page.
+	 */
 	public function slc_admin_assets() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['page'] ) && ! empty( $_GET['page'] ) && 'seo-links-crawler' === $_GET['page'] ) {
 			wp_enqueue_script(
 				'slc-admin-script',

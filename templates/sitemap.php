@@ -1,20 +1,21 @@
 <?php
-$sitemap_structure = '<!DOCTYPE html>
+$slc_sitemap_structure = '<!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" type="text/css" href="../assets/css/sitemap.css">
+<head>';
+// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet
+$slc_sitemap_structure .= '<link rel="stylesheet" type="text/css" href="../assets/css/sitemap.css">
 </head>
 <body>
 <div class="container">
 <h1 class="title">Sitemap of home page</h1>';
-if ( $results ) {
-	$sitemap_structure .= ' <ul class="sitemap-list"> ';
-	foreach ( $results as $result ) {
-		$sitemap_structure .= '<li><a href="' . $result . '">' . $result . '</a></li>';
+if ( $slc_results ) {
+	$slc_sitemap_structure .= ' <ul class="sitemap-list"> ';
+	foreach ( $slc_results as $slc_result ) {
+		$slc_sitemap_structure .= '<li><a href="' . $slc_result . '">' . $slc_result . '</a></li>';
 	}
-	$sitemap_structure .= '</ul>';
+	$slc_sitemap_structure .= '</ul>';
 } else {
-	$sitemap_structure .= '<p>No crawl results available.</p>';
+	$slc_sitemap_structure .= '<p>No crawl results available.</p>';
 }
-$sitemap_structure .= '</div></body>
+$slc_sitemap_structure .= '</div></body>
 </html>';

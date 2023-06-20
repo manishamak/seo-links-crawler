@@ -2,44 +2,82 @@
 
 namespace Slc\SeoLinksCrawler\Cache;
 
-use Slc\SeoLinksCrawler\File_Reader\FilesystemReader;
+use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
 
+defined( 'ABSPATH' ) || exit;
+
+/**
+ *  Class for temporary storage(cache).
+ **/
 class FilesystemCache {
+
+	/**
+	 * Instance of the WPFilesystem.
+	 *
+	 * @var WPFilesystem
+	 */
 	private $filesystem;
+
+	/**
+	 * Path of cache directory.
+	 *
+	 * @var string
+	 */
 	private $cache_directory = WP_CONTENT_DIR . '/slc-cache/';
+
+	/**
+	 * Full Path of cache file.
+	 *
+	 * @var string
+	 */
 	private $cache_file_path;
 
-	public function __construct( FilesystemReader $filesystem ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param WPFilesystem $filesystem Instance of WPFilesystem class.
+	 */
+	public function __construct( WPFilesystem $filesystem ) {
 		$this->filesystem      = $filesystem;
 		$this->cache_file_path = $this->cache_directory . 'cached-home-connected-links.txt';
 	}
 
+	/**
+	 * Create cache directory if not exists.
+	 */
 	public function initiate_cache() {
 		if ( ! is_dir( $this->cache_directory ) ) {
 			wp_mkdir_p( $this->cache_directory );
 		}
 	}
 
+	/**
+	 * Store data in the cache file.
+	 *
+	 * @param  array $data   data to be stored in cache.
+	 *
+	 * @return boolean $status True on success, false on failure.
+	 */
 	public function cache_data( $data ) {
-		$serialized_data = serialize( $data );
+		$serialized_data = maybe_serialize( $data );
 		$status          = $this->filesystem->put_file_content( $this->cache_file_path, $serialized_data, FS_CHMOD_FILE );
 		return $status;
 	}
 
+	/**
+	 * Reads data from cache file.
+	 *
+	 * @return array|false $cachedData cache data on success, false on failure.
+	 */
 	public function get_cache_data() {
-		$cachedData = $this->filesystem->get_file_content( $this->cache_file_path );
-
-		return $cachedData ? unserialize( $cachedData ) : $cachedData;
+		$cached_data = $this->filesystem->get_file_content( $this->cache_file_path );
+		return $cached_data ? maybe_unserialize( $cached_data ) : $cached_data;
 	}
 
+	/**
+	 * Delete cache file.
+	 */
 	public function clean_up_cache() {
-		// $cache_file = $this->get_cache_file_path();
-		// $expiration_time = 3600; // 1 hour
-		// global $wp_filesystem;
-		// WP_Filesystem();
-		// && $wp_filesystem->mtime($cache_file) < (time() - $expiration_time)
-		// if ( $wp_filesystem->exists($this->cache_file_path) ) {
 		$this->filesystem->delete_file( $this->cache_file_path );
-		// }
 	}
 }
