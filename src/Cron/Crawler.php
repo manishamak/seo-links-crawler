@@ -18,7 +18,7 @@ class Crawler {
 	 *
 	 * @var string
 	 */
-	public const SITEMAP_HTML_PATH = SLC_PLUGIN_PATH . '/templates/sitemap.html';
+	const SITEMAP_HTML_PATH = SLC_PLUGIN_PATH . '/templates/sitemap.html';
 
 	/**
 	 * Instance of the WPFilesystem.
@@ -78,9 +78,10 @@ class Crawler {
 	 * @throws \Exception If home page has not been created.
 	 * @throws \Exception If sitemap.html file has not been created.
 	 *
-	 * @return array|WP_Error $links_result array of links on success, WP_Error on failure.
+	 * @return array|WP_Error $send_results array of links and file error on success, WP_Error on failure.
 	 */
 	public function slc_execute_crawling() {
+		$file_error = '';
 		// start crawling scheduler.
 		$this->schedule_cron();
 
@@ -110,7 +111,8 @@ class Crawler {
 
 				$is_home_created = $this->save_home_page_as_html();
 				if ( ! $is_home_created ) {
-					throw new \Exception( esc_html__( 'There is some error in creating home.html. Please check active theme folder permission.', 'seo-links-crawler' ) );
+					/* translators: 1: path of home.html folder */
+					throw new \Exception( sprintf( esc_html__( 'There is some error in creating home.html. Please check %1$s in active theme folder. Either its not exists or is not writable. You can create one and change its permission manually.', 'seo-links-crawler' ), 'slc-templates' ) );
 				}
 
 				$is_sitemap_created = $this->create_sitemap_html( $links_result );
@@ -119,11 +121,16 @@ class Crawler {
 				}
 			} catch ( \Exception $e ) {
 				error_log( 'Crawler file creation failed: ' . $e->getMessage() );
+				$file_error = $e->getMessage();
 			}
 
 			do_action( 'slc_after_links_crawling_action', $links_result );
 
-			return $links_result;
+			$send_results = [
+				'links'      => $links_result,
+				'file_error' => $file_error,
+			];
+			return $send_results;
 
 		} catch ( \Exception $e ) {
 			error_log( 'Cron task failed: ' . $e->getMessage() );
@@ -150,10 +157,13 @@ class Crawler {
 	 * @return boolean $file_created True on success, False on failure.
 	 */
 	private function save_home_page_as_html() {
-		$new_home_file_name = $this->filesystem->file_exists( get_stylesheet_directory() . '/home.html' ) ? '/home-slc.html' : '/home.html';
-		$new_home_file_path = get_stylesheet_directory() . $new_home_file_name;
-		$home_contents      = $this->filesystem->get_file_content( $this->get_home() );
-		$file_created       = $this->filesystem->put_file_content( $new_home_file_path, $home_contents );
+		$home_html_file_directory = get_stylesheet_directory() . '/slc-templates/';
+		if ( ! is_dir( $home_html_file_directory ) ) {
+			wp_mkdir_p( $home_html_file_directory );
+		}
+		$home_html_file_path = $home_html_file_directory . '/home.html';
+		$home_contents       = $this->filesystem->get_file_content( $this->get_home() );
+		$file_created        = $this->filesystem->put_file_content( $home_html_file_path, $home_contents );
 		return $file_created;
 	}
 
@@ -167,7 +177,11 @@ class Crawler {
 		if ( is_wp_error( $results ) ) {
 			wp_send_json_error( $results->get_error_message() );
 		}
-		$json_success = ! $cached_links ? $results : $cached_links;
+		$links_list   = ! $cached_links ? $results['links'] : $cached_links;
+		$json_success = [
+			'result'     => $links_list,
+			'file_error' => $results['file_error'],
+		];
 		wp_send_json_success( $json_success );
 	}
 
@@ -183,7 +197,7 @@ class Crawler {
 	/**
 	 * Method to unschedule the hourly cron event.
 	 */
-	public function unschedule_cron() {
+	public static function unschedule_cron() {
 		wp_clear_scheduled_hook( 'slc_crawl_internal_links_scheduler' );
 	}
 }

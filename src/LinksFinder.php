@@ -46,13 +46,46 @@ class LinksFinder {
 		if ( isset( $parsed_link['host'] ) && ! empty( $parsed_link['host'] ) && $parsed_home_url['host'] === $parsed_link['host'] ) {
 			return true;
 		}
-		if ( empty( $parsed_link['scheme'] ) && empty( $parsed_link['host'] ) ) {
+
+		if ( empty( $parsed_link['scheme'] ) && empty( $parsed_link['host'] ) && ! empty( $parsed_link['path'] ) ) {
 			return true;
 		}
+
 		if ( isset( $url['path'] ) && \strpos( $url['path'], $home_url['path'] ) === 0 ) {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Check whether a url is relative.
+	 *
+	 * @param string $url URL string to check.
+	 *
+	 * @return boolean True when url is relative.
+	 */
+	public function is_relative_url( $url ) {
+		return ( \strpos( $url, 'http' ) !== 0 && \strpos( $url, '//' ) !== 0 );
+	}
+
+	/**
+	 * Parse the home URL setting to find the base URL for relative URLs.
+	 *
+	 * @param string|null $path Optional path string.
+	 *
+	 * @return string $base_url absolute url
+	 */
+	public function create_absolute_url( $path = null ) {
+		$path      = \wp_parse_url( $path, \PHP_URL_PATH );
+		$url_parts = \wp_parse_url( \home_url() );
+
+		$base_url = \trailingslashit( $url_parts['scheme'] . '://' . $url_parts['host'] );
+
+		if ( ! \is_null( $path ) ) {
+			$base_url .= \ltrim( $path, '/' );
+		}
+
+		return $base_url;
 	}
 
 	/**
@@ -67,7 +100,7 @@ class LinksFinder {
 		$file_content   = $this->wp_filesystem->get_file_content( $page_url );
 
 		if ( ! $file_content ) {
-			return new \WP_Error( 'scan_page_error', esc_html__( 'An error occurred while scanning the page. Please try again later.', 'seo-links-crawler' ) );
+			return new \WP_Error( 'scan_page_error', esc_html__( 'An error occurred while scanning the page. Please check home page template.', 'seo-links-crawler' ) );
 		}
 
 		$this->dom_document_parser->loadHTMLDocument( $file_content );
@@ -87,6 +120,18 @@ class LinksFinder {
 				}
 			)
 		);
-		return $internal_links;
+
+		$absolute_internal_links = array_map(
+			function( $element ) {
+				if ( $this->is_relative_url( $element ) ) {
+					return $this->create_absolute_url( $element );
+				} else {
+					return $element;
+				}
+			},
+			$internal_links
+		);
+
+		return $absolute_internal_links;
 	}
 }

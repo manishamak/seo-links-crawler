@@ -30,7 +30,7 @@ a.slc-button-action:hover{
     margin: 10px 0;
 }
 
-.loading{
+.slc-links-wrap .loading{
     color: #fff !important;
     background: #2271b1 !important;
 }

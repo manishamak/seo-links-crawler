@@ -26,17 +26,20 @@
 			.done( function ( res ) {
 				let html;
 				if(res.success){
+					if (res.data.file_error) {
+						jQuery('#wpbody-content').prepend('<div class="error"><p>'+ res.data.file_error +'</p></div>');
+					}
 					html = '<ul>';
-					var obj = res.data;
-					Object.keys(obj).forEach(function(k){
-						html += '<li><a href='+obj[k]+'>'+obj[k]+'</a></li>';
+					var obj = res.data.result;
+					Object.keys(obj).forEach(function(k) {
+						let link = obj[k];
+						html += '<li><a href="' + link + '" class="slc-link">' + link + '</a></li>';
 					});
 					html += '</ul>';
 				}else{
-					html = res.data;
+					html = '<p>' + res.data + '</p>';
 				}
 				$resultantDiv.html( html );
-			// console.log(res);
 		} ).fail( function ( xhr ) {
 			console.log( xhr.responseText );
 		} ).always(function() {
