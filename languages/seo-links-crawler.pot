@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Seo Links Crawler\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-20 07:24+0000\n"
+"POT-Creation-Date: 2023-06-21 13:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -16,8 +16,9 @@ msgstr ""
 "X-Loco-Version: 2.6.4; wp-6.2.2\n"
 "X-Domain: seo-links-crawler"
 
-#: src/LinksFinder.php:43
-msgid "An error occurred while scanning the page. Please try again later."
+#: src/LinksFinder.php:103
+msgid ""
+"An error occurred while scanning the page. Please check home page template."
 msgstr ""
 
 #. Description of the plugin
@@ -25,7 +26,7 @@ msgid ""
 "Crawl and display all internal links to admin and generates sitemap.html"
 msgstr ""
 
-#: src/Admin/AdminPage.php:93
+#: src/Admin/AdminPage.php:97
 msgid "Loading"
 msgstr ""
 
@@ -33,20 +34,22 @@ msgstr ""
 msgid "Manisha Makhija"
 msgstr ""
 
-#: src/Cron/Crawler.php:54
+#: src/Cron/Crawler.php:102
 msgid "No internal links found."
 msgstr ""
 
-#: src/LinksFinder.php:50
+#: src/LinksFinder.php:110
 msgid "No links found in the page."
 msgstr ""
 
 #: src/Autoloader.php:41
-msgid "Please install composer."
+msgid ""
+"Please install composer in order to make <strong>SEO links Crawler</strong> "
+"working."
 msgstr ""
 
-#: src/Admin/AdminPage.php:44 src/Admin/AdminPage.php:45
-#: src/Admin/AdminPage.php:56
+#: src/Admin/AdminPage.php:52 src/Admin/AdminPage.php:53
+#: src/Admin/AdminPage.php:66
 msgid "SEO Links Crawler"
 msgstr ""
 
@@ -54,23 +57,27 @@ msgstr ""
 msgid "Seo Links Crawler"
 msgstr ""
 
-#: src/Admin/AdminPage.php:57 src/Admin/AdminPage.php:94
+#: src/Admin/AdminPage.php:67 src/Admin/AdminPage.php:98
 msgid "Start Crawler"
 msgstr ""
 
-#: src/Cron/Crawler.php:60
+#. 1: path of cache folder
+#: src/Cron/Crawler.php:109
 #, php-format
 msgid ""
 "There is an error in storing the crawling results in cache. Please check the "
-"permission of %s."
+"permission of %1$s."
 msgstr ""
 
-#: src/Cron/Crawler.php:65
+#. 1: path of home.html folder
+#: src/Cron/Crawler.php:115
+#, php-format
 msgid ""
-"There is some error in creating home.html. Please check active theme folder "
-"permission."
+"There is some error in creating home.html. Please check %1$s in active theme "
+"folder. Either its not exists or is not writable. You can create one and "
+"change its permission manually."
 msgstr ""
 
-#: src/Cron/Crawler.php:70
+#: src/Cron/Crawler.php:120
 msgid "There is some error in creating sitemap.html. Please try again later."
 msgstr ""
