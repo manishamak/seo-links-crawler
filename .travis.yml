@@ -9,7 +9,7 @@ notifications:
     on_failure: never
 branches:
   only:
-  - master
+  - main
   - develop
 cache:
   directories:
@@ -34,7 +34,7 @@ matrix:
     env: WP_TRAVISCI=phpcs
 before_install:
   # Unless we need XDebug, disable it for improved performance.
-  - phpenv config-rm xdebug.ini || return 0
+  #- phpenv config-rm xdebug.ini || return 0
   - rm composer.lock
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
   - composer remove --dev phpstan/phpstan szepeviktor/phpstan-wordpress
