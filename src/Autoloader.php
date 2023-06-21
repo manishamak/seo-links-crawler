@@ -38,16 +38,16 @@ class Autoloader {
 	 * If the autoloader is missing, display admin notice
 	 */
 	protected static function missing_autoloader() {
-		$error_msg = esc_html__( 'Please install composer.', 'seo-links-crawler' );
+		$error_msg = __( 'Please install composer in order to make <strong>SEO links Crawler</strong> working.', 'seo-links-crawler' );
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( $error_msg );
+			error_log( wp_kses_post( $error_msg ) );
 		}
 
 		add_action(
 			'admin_notices',
-			function() { ?>
+			function() use ( $error_msg ) { ?>
 			<div class="notice notice-error">
-				<p><?php echo $error_msg; ?></p>
+				<p><?php echo wp_kses_post( $error_msg ); ?></p>
 			</div>
 				<?php
 			}

@@ -44,11 +44,21 @@ if ( ! defined( 'SLC_VERSION' ) ) {
 	define( 'SLC_VERSION', 1.0 );
 }
 
-require __DIR__ . '/src/Autoloader.php';
+require SLC_PLUGIN_PATH . '/src/Autoloader.php';
 
 if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 	return;
 }
 
-\Slc\SeoLinksCrawler\Admin\adminpage::init();
+// container initiation.
+$slc_container = new Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
+new \Slc\SeoLinksCrawler\Admin\AdminPage( $slc_container );
 
+
+/**
+ * Plugin deactivation hook
+ */
+function slc_deactivate_plugin() {
+	Slc\SeoLinksCrawler\Cron\Crawler::unschedule_cron();
+}
+register_deactivation_hook( SLC_PLUGIN_FILE, 'slc_deactivate_plugin' );

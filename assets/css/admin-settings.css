@@ -1,0 +1,36 @@
+.slc-wrap{
+    margin: 10px 20px 0 2px;
+}
+.slc-wrap h1.wp-heading-inline {
+    margin-right: 5px;
+    font-weight: normal;
+    margin-bottom: 50px;
+}
+a.slc-button-action{
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #2271b1;
+    border-radius: 2px;
+    text-shadow: none;
+    font-weight: 600;
+    font-size: 17px;
+    line-height: normal;
+    color: #2271b1;
+    background: #f6f7f7;
+    cursor: pointer;
+}
+a.slc-button-action:hover{
+    color: #fff;
+    background: #2271b1;
+}
+.slc-links-wrap{
+    margin-top: 40px;
+}
+.slc-links-wrap li {
+    margin: 10px 0;
+}
+
+.slc-links-wrap .loading{
+    color: #fff !important;
+    background: #2271b1 !important;
+}

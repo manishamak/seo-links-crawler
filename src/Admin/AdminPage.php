@@ -1,46 +1,80 @@
 <?php
 namespace Slc\SeoLinksCrawler\Admin;
 
+use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
+
+defined( 'ABSPATH' ) || exit;
+
 /**
- *  Main class
+ *  Admin page settings class.
  **/
 class AdminPage {
 
 	/**
-	 * Initiate class.
+	 * Create instances of the classes.
+	 *
+	 * @param SeoLinksCrawlerContainer $container Instance of the container.
 	 */
-	public static function init() {
-		add_action( 'admin_menu', [ __CLASS__, 'slc_register_page' ] );
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'slc_admin_assets' ] );
-		add_action( 'wp_ajax_slc_admin_display_links', [ __CLASS__, 'slc_admin_display_links' ] );
+	public function __construct( SeoLinksCrawlerContainer $container ) {
+
+		$filesystem_obj   = $container->get( 'WPFilesystem' );
+		$links_finder_obj = $container->get(
+			'LinksFinder',
+			$filesystem_obj,
+			$container->get( 'DomDocumentParser' )
+		);
+		$container->get(
+			'Crawler',
+			$filesystem_obj,
+			$links_finder_obj,
+			$container->get(
+				'FilesystemCache',
+				$filesystem_obj
+			)
+		);
+		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
+		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
 	}
 
+	/**
+	 *  Loads a plugin’s translated strings.
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain( 'seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages' );
+	}
+
+	/**
+	 *  Adds settings page in admin dashboard.
+	 */
 	public function slc_register_page() {
 		add_menu_page(
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			'manage_options',
 			'seo-links-crawler',
-			[ __CLASS__, 'slc_page_handler' ],
-			'dashicons-tagcloud',
-			''
+			[ $this, 'slc_page_handler' ],
+			'dashicons-tagcloud'
 		);
 	}
 
+	/**
+	 *  Admin settings page callback function.
+	 */
 	public function slc_page_handler(){ ?>
 		<div class="slc-wrap">
-			<button class="slc-button"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></button>
+			<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
+			<a href="#" class="slc-button-action"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
 			<div class="slc-links-wrap"></div>
 		</div> 
 		<?php
-		\Slc\SeoLinksCrawler\Admin\adminpage::init();
-		$t = new \Slc\SeoLinksCrawler\FilesystemReader();
-		$r = $t->get_file_content( 'http://localhost/wp-demo' );
-		var_dump( $r );
-
 	}
 
+	/**
+	 *  Includes assets in Admin settings page.
+	 */
 	public function slc_admin_assets() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['page'] ) && ! empty( $_GET['page'] ) && 'seo-links-crawler' === $_GET['page'] ) {
 			wp_enqueue_script(
 				'slc-admin-script',
@@ -50,10 +84,18 @@ class AdminPage {
 				false
 			);
 
+			wp_enqueue_style(
+				'slc-admin-style',
+				SLC_PLUGIN_URL . '/assets/css/admin-settings.css',
+				[],
+				SLC_VERSION
+			);
+
 			$settings = [
-				'ajaxurl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'slc-admin' ),
-				'loading' => esc_html__( 'Loading', 'seo-links-crawler' ),
+				'ajaxurl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'slc-admin' ),
+				'loading'      => esc_html__( 'Loading', 'seo-links-crawler' ),
+				'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' ),
 			];
 
 			wp_localize_script(
@@ -64,8 +106,4 @@ class AdminPage {
 		}
 	}
 
-	public function slc_admin_display_links() {
-		check_ajax_referer( 'slc-admin', 'nonce' );
-		var_dump( $_POST );
-	}
 }
