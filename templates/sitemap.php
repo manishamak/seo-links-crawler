@@ -11,7 +11,7 @@ $slc_sitemap_structure .= '<link rel="stylesheet" type="text/css" href="../asset
 if ( $slc_results ) {
 	$slc_sitemap_structure .= ' <ul class="sitemap-list"> ';
 	foreach ( $slc_results as $slc_result ) {
-		$slc_sitemap_structure .= '<li><a href="' . $slc_result . '">' . $slc_result . '</a></li>';
+		$slc_sitemap_structure .= '<li><a href="' . esc_url( $slc_result ) . '">' . esc_html( $slc_result ) . '</a></li>';
 	}
 	$slc_sitemap_structure .= '</ul>';
 } else {

@@ -21,6 +21,13 @@ class Crawler {
 	const SITEMAP_HTML_PATH = SLC_PLUGIN_PATH . '/templates/sitemap.html';
 
 	/**
+	 * Home.html full path.
+	 *
+	 * @var string
+	 */
+	const HOME_HTML_RELATIVE_PATH = '/slc-templates/home.html';
+
+	/**
 	 * Instance of the WPFilesystem.
 	 *
 	 * @var WPFilesystem
@@ -57,7 +64,7 @@ class Crawler {
 		$this->links_finder     = $links_finder;
 		$this->filesystem_cache = $filesystem_cache;
 		add_action( 'wp_ajax_slc_admin_display_links', [ $this, 'slc_admin_display_links' ] );
-		add_action( 'slc_crawl_internal_links_scheduler', [ $this, 'slc_execute_crawling' ] );
+		add_action( 'slc_crawl_internal_links_scheduler', [ $this, 'slc_execute_cron_crawling' ] );
 	}
 
 	/**
@@ -68,6 +75,22 @@ class Crawler {
 	public function get_home() {
 		return \get_home_url();
 	}
+
+
+	/**
+	 * Execute the cron crawling process.
+	 *
+	 * @return array|WP_Error $send_results array of links and file error on success, WP_Error on failure.
+	 */
+	public function slc_execute_cron_crawling() {
+
+		$this->filesystem_cache->clean_up_cache();
+		$this->filesystem->delete_file( self::SITEMAP_HTML_PATH );
+		$home_html_path = \get_stylesheet_directory() . self::HOME_HTML_RELATIVE_PATH;
+		$this->filesystem->delete_file( $home_html_path );
+		$this->slc_execute_crawling();
+	}
+
 
 	/**
 	 * Execute the crawling process.
@@ -90,39 +113,47 @@ class Crawler {
 		try {
 			$this->filesystem_cache->initiate_cache();
 
-			$this->filesystem_cache->clean_up_cache();
+			$home_url     = $this->get_home();
+			$home_content = $this->filesystem->get_file_content( $home_url );
+			$file_errors  = [];
 
-			$this->filesystem->delete_file( self::SITEMAP_HTML_PATH );
+			$links_result = $this->filesystem_cache->get_cache_data();
+			if ( ! $links_result ) {
+				$links_result = $this->links_finder->create_internal_links( $home_url, $home_content );
+				if ( is_wp_error( $links_result ) ) {
+					throw new \Exception( $links_result->get_error_message() );
+				}
+				if ( empty( $links_result ) ) {
+					throw new \Exception( esc_html__( 'No internal links found.', 'seo-links-crawler' ) );
+				}
 
-			$links_result = $this->links_finder->create_internal_links( $this->get_home() );
-			if ( is_wp_error( $links_result ) ) {
-				throw new \Exception( $links_result->get_error_message() );
-			}
-			if ( empty( $links_result ) ) {
-				throw new \Exception( esc_html__( 'No internal links found.', 'seo-links-crawler' ) );
-			}
-
-			try {
 				$data_cached = $this->filesystem_cache->cache_data( $links_result );
 				if ( ! $data_cached ) {
 					/* translators: 1: path of cache folder */
-					throw new \Exception( sprintf( esc_html__( 'There is an error in storing the crawling results in cache. Please check the permission of %1$s.', 'seo-links-crawler' ), 'wp-content/slc-cache folder' ) );
+					$file_errors[] = sprintf( esc_html__( 'There is an error in storing the crawling results in cache. Please check the permission of %1$s.', 'seo-links-crawler' ), 'wp-content/slc-cache folder' );
 				}
 
-				$is_home_created = $this->save_home_page_as_html();
+			}
+
+				$is_home_created = $this->save_home_page_as_html( $home_content );
 				if ( ! $is_home_created ) {
 					/* translators: 1: path of home.html folder */
-					throw new \Exception( sprintf( esc_html__( 'There is some error in creating home.html. Please check %1$s in active theme folder. Either its not exists or is not writable. You can create one and change its permission manually.', 'seo-links-crawler' ), 'slc-templates' ) );
+					$file_errors[] = sprintf( esc_html__( 'There is some error in creating home.html. Please check %1$s in active theme folder. Either its not exists or is not writable. You can create one and change its permission manually.', 'seo-links-crawler' ), 'slc-templates' );
 				}
 
 				$is_sitemap_created = $this->create_sitemap_html( $links_result );
 				if ( ! $is_sitemap_created ) {
-					throw new \Exception( esc_html__( 'There is some error in creating sitemap.html. Please try again later.', 'seo-links-crawler' ) );
+					$file_errors[] = esc_html__( 'There is some error in creating sitemap.html. Please try again later.', 'seo-links-crawler' );
 				}
-			} catch ( \Exception $e ) {
-				error_log( 'Crawler file creation failed: ' . $e->getMessage() );
-				$file_error = $e->getMessage();
-			}
+
+				if ( ! empty( $file_errors ) ) {
+					$file_error = implode( ' ', $file_errors );
+					error_log( 'Crawler file creation failed: ' . $file_error );
+				}
+			// } catch ( \Exception $e ) {
+			// 	error_log( 'Crawler file creation failed: ' . $e->getMessage() );
+			// 	$file_error = $e->getMessage();
+			// }
 
 			do_action( 'slc_after_links_crawling_action', $links_result );
 
@@ -147,6 +178,9 @@ class Crawler {
 	 */
 	private function create_sitemap_html( $slc_results ) {
 		require SLC_PLUGIN_PATH . '/templates/sitemap.php';
+		if ( $this->filesystem->file_exists( self::SITEMAP_HTML_PATH ) ) {
+			return true;
+		}
 		$sitemap_created = $this->filesystem->put_file_content( self::SITEMAP_HTML_PATH, $slc_sitemap_structure );
 		return $sitemap_created;
 	}
@@ -154,16 +188,23 @@ class Crawler {
 	/**
 	 * Create home.html from home page.
 	 *
+	 * @param string $home_contents Pre-fetched home page HTML content.
+	 *
 	 * @return boolean $file_created True on success, False on failure.
 	 */
-	private function save_home_page_as_html() {
-		$home_html_file_directory = get_stylesheet_directory() . '/slc-templates/';
+	private function save_home_page_as_html( $home_contents ) {
+		$home_html_path = \get_stylesheet_directory() . self::HOME_HTML_RELATIVE_PATH;
+		$home_html_file_directory = dirname( $home_html_path );
 		if ( ! is_dir( $home_html_file_directory ) ) {
 			wp_mkdir_p( $home_html_file_directory );
 		}
-		$home_html_file_path = $home_html_file_directory . '/home.html';
-		$home_contents       = $this->filesystem->get_file_content( $this->get_home() );
-		$file_created        = $this->filesystem->put_file_content( $home_html_file_path, $home_contents );
+		if ( $this->filesystem->file_exists( $home_html_path ) ) {
+			return true;
+		}
+		if ( ! $home_contents ) {
+			return false;
+		}
+		$file_created = $this->filesystem->put_file_content( $home_html_path, $home_contents );
 		return $file_created;
 	}
 

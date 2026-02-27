@@ -17,7 +17,7 @@ class Autoloader {
 	 *
 	 * If autoloader is not present then log the error and display admin notice.
 	 *
-	 * @return boolean
+	 * @return mixed
 	 */
 	public static function init() {
 		$autoloader = SLC_PLUGIN_PATH . '/vendor/autoload.php';
