@@ -41,7 +41,7 @@ class AdminPage {
 	 *  Loads a plugin’s translated strings.
 	 */
 	public function load_textdomain() {
-		load_plugin_textdomain( 'seo-links-crawler', false, SLC_PLUGIN_PATH . '/languages' );
+		load_plugin_textdomain( 'seo-links-crawler', false, dirname( plugin_basename( SLC_PLUGIN_FILE ) ) . '/languages' );
 	}
 
 	/**
@@ -66,7 +66,7 @@ class AdminPage {
 			<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
 			<a href="#" class="slc-button-action"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
 			<div class="slc-links-wrap"></div>
-		</div> 
+		</div>
 		<?php
 	}
 

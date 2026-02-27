@@ -39,7 +39,7 @@ class LinksFinder {
 	 *
 	 * @param  array $parsed_link  array of parts of url.
 	 *
-	 * @return boolean  true if link is internal
+	 * @return bool  true if link is internal
 	 */
 	public function is_internal_link( $parsed_link ) {
 		$parsed_home_url = \wp_parse_url( \home_url() );
@@ -51,7 +51,7 @@ class LinksFinder {
 			return true;
 		}
 
-		if ( isset( $url['path'] ) && \strpos( $url['path'], $home_url['path'] ) === 0 ) {
+		if ( isset( $parsed_link['path'] ) && \strpos( $parsed_link['path'], $parsed_home_url['path'] ) === 0 ) {
 			return true;
 		}
 		return false;
@@ -62,7 +62,7 @@ class LinksFinder {
 	 *
 	 * @param string $url URL string to check.
 	 *
-	 * @return boolean True when url is relative.
+	 * @return bool True when url is relative.
 	 */
 	public function is_relative_url( $url ) {
 		return ( \strpos( $url, 'http' ) !== 0 && \strpos( $url, '//' ) !== 0 );
@@ -91,13 +91,17 @@ class LinksFinder {
 	/**
 	 * Generates internal links from given page.
 	 *
-	 * @param  string $page_url       page url which needs to scan.
+	 * @param  string      $page_url      page url which needs to scan.
+	 * @param  string|null $file_content  pre-fetched HTML content. If null, content will be fetched from $page_url.
 	 *
-	 * @return array  $internal_links list of internal links
+	 * @return array|WP_Error     $internal_links list of internal links or WP_Error on failure.
 	 */
-	public function create_internal_links( $page_url ) {
+	public function create_internal_links( $page_url, $file_content = null ) {
 		$internal_links = [];
-		$file_content   = $this->wp_filesystem->get_file_content( $page_url );
+
+		if ( null === $file_content ) {
+			$file_content = $this->wp_filesystem->get_file_content( $page_url );
+		}
 
 		if ( ! $file_content ) {
 			return new \WP_Error( 'scan_page_error', esc_html__( 'An error occurred while scanning the page. Please check home page template.', 'seo-links-crawler' ) );
