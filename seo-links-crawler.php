@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name:       Seo Links Crawler
+ * Plugin Name:       SEO Links Crawler
  * Description:       Crawl and display all internal links to admin and generates sitemap.html
- * Version:           1.0
+ * Version:           1.1.0
  * Author:            Manisha Makhija
  * Author URI:        https://profiles.wordpress.org/manishamakhija/
  * License:           GPL v3
@@ -23,7 +23,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-// Check abspath exists or not.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -41,7 +40,7 @@ if ( ! defined( 'SLC_PLUGIN_URL' ) ) {
 }
 
 if ( ! defined( 'SLC_VERSION' ) ) {
-	define( 'SLC_VERSION', 1.0 );
+	define( 'SLC_VERSION', '1.1.0' );
 }
 
 require SLC_PLUGIN_PATH . '/src/Autoloader.php';
@@ -50,15 +49,31 @@ if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 	return;
 }
 
-// container initiation.
-$slc_container = new Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
-new \Slc\SeoLinksCrawler\Admin\AdminPage( $slc_container );
-
+/**
+ * Bootstrap the plugin after all plugins are loaded.
+ */
+function slc_init_plugin() {
+	$container  = new \Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
+	$admin_page = new \Slc\SeoLinksCrawler\Admin\AdminPage( $container );
+	$admin_page->init();
+}
+add_action( 'plugins_loaded', 'slc_init_plugin' );
 
 /**
- * Plugin deactivation hook
+ * Plugin activation: ensure cache directory exists.
+ */
+function slc_activate_plugin() {
+	$cache_dir = WP_CONTENT_DIR . '/slc-cache/';
+	if ( ! is_dir( $cache_dir ) ) {
+		wp_mkdir_p( $cache_dir );
+	}
+}
+register_activation_hook( SLC_PLUGIN_FILE, 'slc_activate_plugin' );
+
+/**
+ * Plugin deactivation: unschedule cron events.
  */
 function slc_deactivate_plugin() {
-	Slc\SeoLinksCrawler\Cron\Crawler::unschedule_cron();
+	\Slc\SeoLinksCrawler\Cron\Crawler::unschedule_cron();
 }
 register_deactivation_hook( SLC_PLUGIN_FILE, 'slc_deactivate_plugin' );

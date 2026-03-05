@@ -23,10 +23,10 @@ class FilesystemCache {
 	 *
 	 * @var string
 	 */
-	private $cache_directory = WP_CONTENT_DIR . '/slc-cache/';
+	private $cache_directory;
 
 	/**
-	 * Full Path of cache file.
+	 * Full path of cache file.
 	 *
 	 * @var string
 	 */
@@ -39,11 +39,12 @@ class FilesystemCache {
 	 */
 	public function __construct( WPFilesystem $filesystem ) {
 		$this->filesystem      = $filesystem;
-		$this->cache_file_path = $this->cache_directory . 'cached-home-connected-links.txt';
+		$this->cache_directory = WP_CONTENT_DIR . '/slc-cache/';
+		$this->cache_file_path = $this->cache_directory . 'cached-home-connected-links.json';
 	}
 
 	/**
-	 * Create cache directory if not exists.
+	 * Create cache directory if it does not exist.
 	 */
 	public function initiate_cache() {
 		if ( ! is_dir( $this->cache_directory ) ) {
@@ -52,26 +53,37 @@ class FilesystemCache {
 	}
 
 	/**
-	 * Store data in the cache file.
+	 * Store data in the cache file as JSON.
 	 *
-	 * @param  array $data   data to be stored in cache.
+	 * @param array $data Data to be stored in cache.
 	 *
-	 * @return boolean $status True on success, false on failure.
+	 * @return bool True on success, false on failure.
 	 */
 	public function cache_data( $data ) {
-		$serialized_data = maybe_serialize( $data );
-		$status          = $this->filesystem->put_file_content( $this->cache_file_path, $serialized_data, FS_CHMOD_FILE );
-		return $status;
+		$json = wp_json_encode( $data );
+
+		if ( false === $json ) {
+			return false;
+		}
+
+		return $this->filesystem->put_file_content( $this->cache_file_path, $json, FS_CHMOD_FILE );
 	}
 
 	/**
-	 * Reads data from cache file.
+	 * Read data from cache file.
 	 *
-	 * @return array|false $cachedData cache data on success, false on failure.
+	 * @return array|false Cached data array on success, false on failure.
 	 */
 	public function get_cache_data() {
-		$cached_data = $this->filesystem->get_file_content( $this->cache_file_path );
-		return $cached_data ? maybe_unserialize( $cached_data ) : $cached_data;
+		$raw = $this->filesystem->get_file_content( $this->cache_file_path );
+
+		if ( ! $raw ) {
+			return false;
+		}
+
+		$data = json_decode( $raw, true );
+
+		return is_array( $data ) ? $data : false;
 	}
 
 	/**
