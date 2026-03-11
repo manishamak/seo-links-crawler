@@ -2,39 +2,75 @@
 
 namespace Slc\SeoLinksCrawler\Container;
 
+/**
+ * Simple dependency injection container with singleton support.
+ */
 class DependencyInjectionContainer {
 
 	/**
-	 * Contains list of classes.
+	 * Registered service class names.
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	private $services = [];
 
 	/**
-	 * Insert dependencies(classes) in the array.
+	 * Cached singleton instances.
 	 *
-	 * @param string $key   class/interface name as the key to services array.
-	 * @param string $class class name as the value to services array.
+	 * @var array<string, object>
 	 */
-	public function register( $key, $class ) {
+	private $singletons = [];
+
+	/**
+	 * Keys that should be treated as singletons.
+	 *
+	 * @var array<string, bool>
+	 */
+	private $shared = [];
+
+	/**
+	 * Register a service class.
+	 *
+	 * @param string $key      Service identifier (class or interface name).
+	 * @param string $class    Fully-qualified class name.
+	 * @param bool   $shared   Whether the service should be a singleton.
+	 */
+	public function register( $key, $class, $shared = false ) {
 		$this->services[ $key ] = $class;
+
+		if ( $shared ) {
+			$this->shared[ $key ] = true;
+		}
 	}
 
 	/**
-	 * Create object of the registered classes.
+	 * Resolve and return an instance of the registered service.
 	 *
-	 * @param  string $key  registered class/interface name.
+	 * For shared services the same instance is returned on every call.
+	 * Additional arguments after $key are passed to the constructor.
 	 *
-	 * @return instance/object  Instance of the registered class.
+	 * @param string $key Service identifier.
+	 *
+	 * @return object|null Instance of the service, or null if not registered.
 	 */
 	public function get( $key ) {
-		$args = array_slice( func_get_args(), 1 ); // Get the arguments starting from the second argument.
-		if ( isset( $this->services[ $key ] ) ) {
-			$class            = $this->services[ $key ];
-			$reflection_class = new \ReflectionClass( $class );
-			return $reflection_class->newInstanceArgs( $args );
+		if ( ! isset( $this->services[ $key ] ) ) {
+			return null;
 		}
-		return null;
+
+		if ( isset( $this->singletons[ $key ] ) ) {
+			return $this->singletons[ $key ];
+		}
+
+		$args             = array_slice( func_get_args(), 1 );
+		$class            = $this->services[ $key ];
+		$reflection_class = new \ReflectionClass( $class );
+		$instance         = $reflection_class->newInstanceArgs( $args );
+
+		if ( ! empty( $this->shared[ $key ] ) ) {
+			$this->singletons[ $key ] = $instance;
+		}
+
+		return $instance;
 	}
 }

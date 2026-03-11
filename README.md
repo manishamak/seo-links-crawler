@@ -1,16 +1,81 @@
-# Package Template
-Repository template for our packages
+# SEO Links Crawler
 
-# Usage
-When creating a new repository for a package or a plugin, select this repository as the template. It will initialize the new repository with all the structure & files contained in the template.
+A WordPress plugin that crawls your home page, extracts all internal links, displays them in the admin dashboard, and generates a static `sitemap.html` file.
 
-# Content
-* `bin/install-wp-tests.sh`: installer for WordPress tests suite
-* `.editorconfig`: config file for your IDE to follow our coding standards
-* `.gitattributes`: list of directories & files excluded from export
-* `.gitignore`: list of directories & files excluded from versioning
-* `.travis.yml`: Travis-CI configuration file
-* `composer.json`: Base composer file to customize for the project
-* `LICENSE`: License file using GPLv3
-* `phpcs.xml`: Base PHP Code Sniffer configuration file to customize for the project
-* `README.md`: The readme displayed on Github, to customize for the project
+## Features
+
+- **Internal link discovery** — Parses the home page HTML and identifies all internal links (absolute and relative).
+- **Admin dashboard** — One-click crawl with a clean admin UI showing all discovered links.
+- **Static sitemap.html** — Auto-generates a styled HTML sitemap from crawl results.
+- **Filesystem cache** — Results are cached as JSON to avoid repeated HTTP requests.
+- **WP Cron** — Hourly automatic re-crawl to keep results fresh.
+- **Extensible** — Filter hooks (`slc_filter_all_links`, `slc_filter_internal_links`) and action hooks (`slc_before_links_crawling_action`, `slc_after_links_crawling_action`) for customisation.
+
+## Requirements
+
+- PHP 7.4+
+- WordPress 5.0+
+
+## Installation
+
+1. Clone or download this repository into `wp-content/plugins/seo-links-crawler/`.
+2. Run `composer install` in the plugin directory.
+3. Activate the plugin from **Plugins > Installed Plugins** in the WordPress admin.
+
+## Usage
+
+1. Navigate to **SEO Links Crawler** in the WordPress admin sidebar.
+2. Click **Start Crawler** to scan the home page.
+3. Internal links are displayed in the admin panel and cached for subsequent visits.
+4. A `sitemap.html` is generated at `wp-content/plugins/seo-links-crawler/templates/sitemap.html`.
+
+## Architecture
+
+```
+src/
+├── Admin/              Admin page registration and asset enqueuing
+├── Cache/              Filesystem-based JSON cache
+├── Contracts/          Interfaces (FileSystem, Cache, HtmlParser, LinksFinder)
+├── Container/          Simple DI container with singleton support
+├── Cron/               WP Cron crawler and AJAX handler
+├── File_Operation/     WP_Filesystem wrapper + wp_remote_get
+├── Html_Parser/        DOMDocument-based link extractor
+├── Autoloader.php      Composer autoloader bootstrap
+└── LinksFinder.php     Internal link detection and normalisation
+```
+
+### Design Decisions
+
+- **Interface-driven DI** — All major classes depend on contracts, making them testable and swappable.
+- **No jQuery** — Admin JS uses vanilla JavaScript with the Fetch API.
+- **JSON cache** — Avoids PHP object injection risks from `unserialize()`.
+- **`wp_remote_get()`** — Uses the WordPress HTTP API instead of `file_get_contents()` for reliable URL fetching.
+
+## Development
+
+```bash
+# Install dependencies
+composer install
+
+# Run coding standards check
+composer phpcs
+
+# Auto-fix coding standards
+composer phpcs:fix
+
+# Run unit tests
+composer test-unit
+```
+
+## Hooks Reference
+
+| Hook | Type | Description |
+|------|------|-------------|
+| `slc_filter_all_links` | Filter | Modify the full list of links before internal filtering |
+| `slc_filter_internal_links` | Filter | Modify the list of internal links |
+| `slc_before_links_crawling_action` | Action | Fires before crawling begins |
+| `slc_after_links_crawling_action` | Action | Fires after crawling completes (receives links array) |
+
+## License
+
+GPL v3 — see [LICENSE](LICENSE) for details.

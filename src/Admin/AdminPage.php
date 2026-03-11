@@ -2,63 +2,19 @@
 
 namespace Slc\SeoLinksCrawler\Admin;
 
-use Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Admin page settings class.
+ * Admin page UI: menu registration, template rendering, and asset enqueuing.
  */
 class AdminPage {
 
 	/**
-	 * Instance of the container.
-	 *
-	 * @var SeoLinksCrawlerContainer
+	 * Register WordPress hooks for the admin UI.
 	 */
-	private $container;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param SeoLinksCrawlerContainer $container Instance of the container.
-	 */
-	public function __construct( SeoLinksCrawlerContainer $container ) {
-		$this->container = $container;
-	}
-
-	/**
-	 * Wire up all dependencies and register WordPress hooks.
-	 */
-	public function init() {
-		$filesystem_obj   = $this->container->get( 'WPFilesystem' );
-		$links_finder_obj = $this->container->get(
-			'LinksFinder',
-			$filesystem_obj,
-			$this->container->get( 'DomDocumentParser' )
-		);
-
-		$crawler = $this->container->get(
-			'Crawler',
-			$filesystem_obj,
-			$links_finder_obj,
-			$this->container->get(
-				'FilesystemCache',
-				$filesystem_obj
-			)
-		);
-		$crawler->register_hooks();
-
+	public function register_hooks() {
 		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
-		add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
-	}
-
-	/**
-	 * Load the plugin's translated strings.
-	 */
-	public function load_textdomain() {
-		load_plugin_textdomain( 'seo-links-crawler', false, dirname( plugin_basename( SLC_PLUGIN_FILE ) ) . '/languages' );
 	}
 
 	/**

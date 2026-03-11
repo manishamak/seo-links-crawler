@@ -2,20 +2,22 @@
 
 namespace Slc\SeoLinksCrawler\File_Operation;
 
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+
 /**
- *  Class for file related operations.
- **/
-class WPFilesystem {
+ * WordPress filesystem wrapper for local file and remote URL operations.
+ */
+class WPFilesystem implements FileSystemInterface {
 
 	/**
-	 * Global variable of WP Filesystem.
+	 * WP_Filesystem instance.
 	 *
-	 * @var WP_Filesystem
+	 * @var \WP_Filesystem_Base|null
 	 */
 	private $filesystem;
 
 	/**
-	 * Constructor for including and initiating WP_Filesystem class.
+	 * Constructor: initialise the WP_Filesystem global.
 	 */
 	public function __construct() {
 		if ( ! function_exists( 'WP_Filesystem' ) ) {
@@ -29,68 +31,88 @@ class WPFilesystem {
 	}
 
 	/**
-	 * Reads entire file into a string.
+	 * Read entire file contents into a string.
 	 *
-	 * @param  string $file_path    Name of the file to read.
+	 * @param string $file_path Path to the file.
 	 *
-	 * @return string|false $file_content Read data on success, false on failure.
+	 * @return string|false File contents on success, false on failure.
 	 */
 	public function get_file_content( $file_path ) {
 		if ( ! $this->filesystem ) {
 			return false;
 		}
-		$file_content = $this->filesystem->get_contents( $file_path );
 
-		return $file_content;
+		return $this->filesystem->get_contents( $file_path );
 	}
 
 	/**
-	 * Writes a string to a file.
+	 * Write a string to a file.
 	 *
-	 * @param string    $file_path    Remote path to the file where to write the data.
-	 * @param string    $file_content The data to write.
-	 * @param int|false $mode         The file permissions as octal number, usually 0644.
+	 * @param string    $file_path    Path to the file.
+	 * @param string    $file_content Content to write.
+	 * @param int|false $mode         File permissions as octal number, usually 0644.
 	 *
-	 * @return boolean  $file_status   True on success, false on failure.
+	 * @return bool True on success, false on failure.
 	 */
 	public function put_file_content( $file_path, $file_content, $mode = false ) {
 		if ( ! $this->filesystem ) {
 			return false;
 		}
-		$file_status = $this->filesystem->put_contents( $file_path, $file_content, $mode );
 
-		return $file_status;
+		return $this->filesystem->put_contents( $file_path, $file_content, $mode );
 	}
 
 	/**
-	 * Deletes a file.
+	 * Delete a file.
 	 *
-	 * @param  string $file_path    Path to the file.
+	 * @param string $file_path Path to the file.
 	 *
-	 * @return boolean $file_status  True on success, false on failure.
+	 * @return bool True on success, false on failure.
 	 */
 	public function delete_file( $file_path ) {
 		if ( ! $this->filesystem ) {
 			return false;
 		}
-		$file_status = $this->filesystem->delete( $file_path );
 
-		return $file_status;
+		return $this->filesystem->delete( $file_path );
 	}
 
 	/**
-	 * Checks if a file or directory exists.
+	 * Check if a file or directory exists.
 	 *
-	 * @param  string $file_path    Path to the file or directory.
+	 * @param string $file_path Path to the file or directory.
 	 *
-	 * @return boolean $file_status  Whether $path exists or not.
+	 * @return bool True if exists, false otherwise.
 	 */
 	public function file_exists( $file_path ) {
 		if ( ! $this->filesystem ) {
 			return false;
 		}
-		$file_status = $this->filesystem->exists( $file_path );
 
-		return $file_status;
+		return $this->filesystem->exists( $file_path );
+	}
+
+	/**
+	 * Fetch content from a remote URL using the WP HTTP API.
+	 *
+	 * @param string $url URL to fetch.
+	 *
+	 * @return string|false Response body on success, false on failure.
+	 */
+	public function fetch_url( $url ) {
+		$response = wp_remote_get( $url, [ 'timeout' => 30 ] );
+
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		$code = wp_remote_retrieve_response_code( $response );
+		if ( $code < 200 || $code >= 300 ) {
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+
+		return ! empty( $body ) ? $body : false;
 	}
 }

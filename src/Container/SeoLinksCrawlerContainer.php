@@ -9,23 +9,26 @@ use Slc\SeoLinksCrawler\LinksFinder;
 use Slc\SeoLinksCrawler\Cron\Crawler;
 
 /**
- * Container class for controlling various dependencies.
+ * Plugin-specific container with pre-registered dependencies.
  */
 class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 
 	/**
-	 * SeoLinksCrawlerContainer constructor.
+	 * Constructor: register all plugin dependencies.
 	 */
 	public function __construct() {
 		$this->register_dependencies();
 	}
 
 	/**
-	 * Register various class dependencies.
+	 * Register plugin class dependencies.
+	 *
+	 * WPFilesystem and DomDocumentParser are shared (singletons) because
+	 * they hold stateful resources that should not be duplicated.
 	 */
 	protected function register_dependencies() {
-		$this->register( 'WPFilesystem', WPFilesystem::class );
-		$this->register( 'DomDocumentParser', DomDocumentParser::class );
+		$this->register( 'WPFilesystem', WPFilesystem::class, true );
+		$this->register( 'DomDocumentParser', DomDocumentParser::class, true );
 		$this->register( 'FilesystemCache', FilesystemCache::class );
 		$this->register( 'LinksFinder', LinksFinder::class );
 		$this->register( 'Crawler', Crawler::class );

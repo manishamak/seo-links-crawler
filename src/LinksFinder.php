@@ -1,48 +1,51 @@
 <?php
+
 namespace Slc\SeoLinksCrawler;
 
-use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
-use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
+use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 
 /**
- *  Class for finding links from pages.
- **/
-class LinksFinder {
+ * Finds internal links from a given page.
+ */
+class LinksFinder implements LinksFinderInterface {
 
 	/**
-	 * Instance of the WPFilesystem.
+	 * Instance of the FileSystemInterface.
 	 *
-	 * @var WPFilesystem
+	 * @var FileSystemInterface
 	 */
 	private $wp_filesystem;
 
 	/**
-	 * Instance of the DomDocumentParser.
+	 * Instance of the HtmlParserInterface.
 	 *
-	 * @var DomDocumentParser
+	 * @var HtmlParserInterface
 	 */
 	private $dom_document_parser;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param WPFilesystem      $wp_filesystem       instance of WPFilesystem class.
-	 * @param DomDocumentParser $dom_document_parser instance of DomDocumentParser class.
+	 * @param FileSystemInterface $wp_filesystem       File system instance.
+	 * @param HtmlParserInterface $dom_document_parser HTML parser instance.
 	 */
-	public function __construct( WPFilesystem $wp_filesystem, DomDocumentParser $dom_document_parser ) {
+	public function __construct( FileSystemInterface $wp_filesystem, HtmlParserInterface $dom_document_parser ) {
 		$this->wp_filesystem       = $wp_filesystem;
 		$this->dom_document_parser = $dom_document_parser;
 	}
 
 	/**
-	 * Check for internal link.
+	 * Check if a parsed link is internal.
 	 *
-	 * @param  array $parsed_link  array of parts of url.
+	 * @param array $parsed_link Parsed URL components.
 	 *
-	 * @return bool  true if link is internal
+	 * @return bool True if the link is internal.
 	 */
 	public function is_internal_link( $parsed_link ) {
 		$parsed_home_url = \wp_parse_url( \home_url() );
+
 		if ( isset( $parsed_link['host'] ) && ! empty( $parsed_link['host'] ) && $parsed_home_url['host'] === $parsed_link['host'] ) {
 			return true;
 		}
@@ -54,26 +57,27 @@ class LinksFinder {
 		if ( isset( $parsed_link['path'] ) && \strpos( $parsed_link['path'], $parsed_home_url['path'] ) === 0 ) {
 			return true;
 		}
+
 		return false;
 	}
 
 	/**
-	 * Check whether a url is relative.
+	 * Check whether a URL is relative.
 	 *
 	 * @param string $url URL string to check.
 	 *
-	 * @return bool True when url is relative.
+	 * @return bool True when the URL is relative.
 	 */
 	public function is_relative_url( $url ) {
 		return ( \strpos( $url, 'http' ) !== 0 && \strpos( $url, '//' ) !== 0 );
 	}
 
 	/**
-	 * Parse the home URL setting to find the base URL for relative URLs.
+	 * Convert a relative path to an absolute URL based on the home URL.
 	 *
 	 * @param string|null $path Optional path string.
 	 *
-	 * @return string $base_url absolute url
+	 * @return string Absolute URL.
 	 */
 	public function create_absolute_url( $path = null ) {
 		$path      = \wp_parse_url( $path, \PHP_URL_PATH );
@@ -89,18 +93,16 @@ class LinksFinder {
 	}
 
 	/**
-	 * Generates internal links from given page.
+	 * Generate a list of internal links from the given page.
 	 *
-	 * @param  string      $page_url      page url which needs to scan.
-	 * @param  string|null $file_content  pre-fetched HTML content. If null, content will be fetched from $page_url.
+	 * @param string      $page_url     URL of the page to scan.
+	 * @param string|null $file_content Pre-fetched HTML content, or null to fetch automatically.
 	 *
-	 * @return array|WP_Error     $internal_links list of internal links or WP_Error on failure.
+	 * @return array|\WP_Error List of internal link URLs, or WP_Error on failure.
 	 */
 	public function create_internal_links( $page_url, $file_content = null ) {
-		$internal_links = [];
-
 		if ( null === $file_content ) {
-			$file_content = $this->wp_filesystem->get_file_content( $page_url );
+			$file_content = $this->wp_filesystem->fetch_url( $page_url );
 		}
 
 		if ( ! $file_content ) {
@@ -118,7 +120,7 @@ class LinksFinder {
 			'slc_filter_internal_links',
 			array_filter(
 				$links,
-				function( $link ) {
+				function ( $link ) {
 					$parsed_link = \wp_parse_url( $link );
 					return $this->is_internal_link( $parsed_link );
 				}
@@ -126,12 +128,11 @@ class LinksFinder {
 		);
 
 		$absolute_internal_links = array_map(
-			function( $element ) {
+			function ( $element ) {
 				if ( $this->is_relative_url( $element ) ) {
 					return $this->create_absolute_url( $element );
-				} else {
-					return $element;
 				}
+				return $element;
 			},
 			$internal_links
 		);

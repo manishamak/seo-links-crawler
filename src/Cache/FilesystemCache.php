@@ -2,19 +2,20 @@
 
 namespace Slc\SeoLinksCrawler\Cache;
 
-use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
+use Slc\SeoLinksCrawler\Contracts\CacheInterface;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- *  Class for temporary storage(cache).
- **/
-class FilesystemCache {
+ * Filesystem-based cache for crawl results.
+ */
+class FilesystemCache implements CacheInterface {
 
 	/**
-	 * Instance of the WPFilesystem.
+	 * Instance of the FileSystemInterface.
 	 *
-	 * @var WPFilesystem
+	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
@@ -35,9 +36,9 @@ class FilesystemCache {
 	/**
 	 * Constructor.
 	 *
-	 * @param WPFilesystem $filesystem Instance of WPFilesystem class.
+	 * @param FileSystemInterface $filesystem File system instance.
 	 */
-	public function __construct( WPFilesystem $filesystem ) {
+	public function __construct( FileSystemInterface $filesystem ) {
 		$this->filesystem      = $filesystem;
 		$this->cache_directory = WP_CONTENT_DIR . '/slc-cache/';
 		$this->cache_file_path = $this->cache_directory . 'cached-home-connected-links.json';

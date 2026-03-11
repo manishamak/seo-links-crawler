@@ -9,6 +9,9 @@
 		}
 	],
 	"type": "wordpress-plugin",
+	"require": {
+		"php": ">=7.4"
+	},
 	"config": {
 		"sort-packages": true,
 		"allow-plugins": {
@@ -16,30 +19,25 @@
 		}
 	},
 	"require-dev": {
-		"php": "^5.6 || 7.*",
 		"brain/monkey": "^2.0",
 		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
 		"phpcompatibility/phpcompatibility-wp": "^2.0",
-		"phpunit/phpunit": "^5.7 || 7.*",
-		"wp-coding-standards/wpcs": "^2",
-		"wp-media/phpunit": "dev-trunk"
+		"phpunit/phpunit": "^9.0",
+		"wp-coding-standards/wpcs": "^3.0"
 	},
 	"autoload": {
 		"psr-4": {
-            "Slc\\SeoLinksCrawler\\": "src/"
-        }
+			"Slc\\SeoLinksCrawler\\": "src/"
+		}
 	},
-	"autoload-dev": {},
+	"autoload-dev": {
+		"psr-4": {
+			"Slc\\SeoLinksCrawler\\Tests\\": "tests/"
+		}
+	},
 	"scripts": {
-		"test-unit": "\"vendor/bin/wpmedia-phpunit\" unit path=Tests/Unit",
-		"test-integration": "\"vendor/bin/wpmedia-phpunit\" integration path=Tests/Integration/",
-		"run-tests": [
-			"@test-unit",
-			"@test-integration"
-		],
-		"install-codestandards": "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run",
+		"test-unit": "phpunit --testsuite unit",
 		"phpcs": "phpcs --basepath=.",
-		"phpcs-changed": "./bin/phpcs-changed.sh",
-		"phpcs:fix": "phpcbf"
+		"phpcs:fix": "phpcbf --basepath=."
 	}
 }

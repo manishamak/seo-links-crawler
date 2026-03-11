@@ -51,11 +51,34 @@ if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 
 /**
  * Bootstrap the plugin after all plugins are loaded.
+ *
+ * Dependency wiring and Crawler hooks run on every request (cron needs them).
+ * Admin UI hooks only register inside the admin context.
  */
 function slc_init_plugin() {
 	$container  = new \Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
-	$admin_page = new \Slc\SeoLinksCrawler\Admin\AdminPage( $container );
-	$admin_page->init();
+	$filesystem = $container->get( 'WPFilesystem' );
+
+	$links_finder = $container->get(
+		'LinksFinder',
+		$filesystem,
+		$container->get( 'DomDocumentParser' )
+	);
+
+	$crawler = $container->get(
+		'Crawler',
+		$filesystem,
+		$links_finder,
+		$container->get( 'FilesystemCache', $filesystem )
+	);
+	$crawler->register_hooks();
+
+	if ( is_admin() ) {
+		$admin_page = new \Slc\SeoLinksCrawler\Admin\AdminPage();
+		$admin_page->register_hooks();
+	}
+
+	load_plugin_textdomain( 'seo-links-crawler', false, dirname( plugin_basename( SLC_PLUGIN_FILE ) ) . '/languages' );
 }
 add_action( 'plugins_loaded', 'slc_init_plugin' );
 

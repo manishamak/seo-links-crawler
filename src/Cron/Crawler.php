@@ -2,14 +2,14 @@
 
 namespace Slc\SeoLinksCrawler\Cron;
 
-use Slc\SeoLinksCrawler\Cache\FilesystemCache;
-use Slc\SeoLinksCrawler\LinksFinder;
-use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
+use Slc\SeoLinksCrawler\Contracts\CacheInterface;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Class for crawling internal links using WP Cron.
+ * Handles crawling of internal links using WP Cron.
  */
 class Crawler {
 
@@ -28,37 +28,31 @@ class Crawler {
 	const HOME_HTML_RELATIVE_PATH = '/slc-templates/home.html';
 
 	/**
-	 * Instance of the WPFilesystem.
-	 *
-	 * @var WPFilesystem
+	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
 	/**
-	 * Instance of the LinksFinder.
-	 *
-	 * @var LinksFinder
+	 * @var LinksFinderInterface
 	 */
 	private $links_finder;
 
 	/**
-	 * Instance of the FilesystemCache.
-	 *
-	 * @var FilesystemCache
+	 * @var CacheInterface
 	 */
 	private $filesystem_cache;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param WPFilesystem    $filesystem       Instance of WPFilesystem class.
-	 * @param LinksFinder     $links_finder     Instance of LinksFinder class.
-	 * @param FilesystemCache $filesystem_cache Instance of FilesystemCache class.
+	 * @param FileSystemInterface  $filesystem       File system instance.
+	 * @param LinksFinderInterface $links_finder     Links finder instance.
+	 * @param CacheInterface       $filesystem_cache Cache instance.
 	 */
 	public function __construct(
-		WPFilesystem $filesystem,
-		LinksFinder $links_finder,
-		FilesystemCache $filesystem_cache
+		FileSystemInterface $filesystem,
+		LinksFinderInterface $links_finder,
+		CacheInterface $filesystem_cache
 	) {
 		$this->filesystem       = $filesystem;
 		$this->links_finder     = $links_finder;
@@ -121,7 +115,7 @@ class Crawler {
 			$links_result = $this->filesystem_cache->get_cache_data();
 
 			if ( ! $links_result ) {
-				$home_content = $this->filesystem->get_file_content( $home_url );
+				$home_content = $this->filesystem->fetch_url( $home_url );
 				$links_result = $this->links_finder->create_internal_links( $home_url, $home_content );
 
 				if ( is_wp_error( $links_result ) ) {
@@ -207,7 +201,7 @@ class Crawler {
 		}
 
 		if ( null === $home_contents ) {
-			$home_contents = $this->filesystem->get_file_content( $this->get_home() );
+			$home_contents = $this->filesystem->fetch_url( $this->get_home() );
 		}
 
 		if ( ! $home_contents ) {

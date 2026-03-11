@@ -2,36 +2,39 @@
 
 namespace Slc\SeoLinksCrawler\Html_Parser;
 
-use DomDocument;
+use DOMDocument;
+use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
 
 /**
- *  Class for parsing the HTML.
- **/
-class DomDocumentParser extends DOMDocument {
+ * DOMDocument-based HTML parser.
+ */
+class DomDocumentParser extends DOMDocument implements HtmlParserInterface {
 
 	/**
-	 * Parses the HTML from string.
+	 * Load an HTML document from a string.
 	 *
-	 * @param string $html HTML contained in the string.
+	 * @param string $html HTML content.
 	 */
 	public function loadHTMLDocument( $html ) {
 		$this->loadHTML( $html, LIBXML_NOERROR | LIBXML_NOWARNING );
 	}
 
 	/**
-	 * Parses the HTML from string.
+	 * Extract all unique link href values from the loaded document.
 	 *
-	 * @return array $total_links contains all links present in the page.
+	 * @return array List of href strings.
 	 */
 	public function gather_links() {
 		$total_links = [];
 		$get_tags    = $this->getElementsByTagName( 'a' );
+
 		if ( $get_tags->length ) {
 			foreach ( $get_tags as $tag ) {
-				array_push( $total_links, $tag->getAttribute( 'href' ) );
+				$total_links[] = $tag->getAttribute( 'href' );
 			}
 			$total_links = \apply_filters( 'slc_filter_all_links', array_unique( $total_links ) );
 		}
+
 		return $total_links;
 	}
 }
