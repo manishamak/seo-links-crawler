@@ -4,8 +4,7 @@
  *
  * Cleans up all data created by the plugin:
  * - Cache directory and files
- * - Generated home.html in the active theme
- * - Generated sitemap.html in the plugin templates
+ * - Generated runtime HTML files
  * - Scheduled cron events
  */
 
@@ -22,18 +21,24 @@ if ( is_dir( $slc_cache_dir ) ) {
 	rmdir( $slc_cache_dir );
 }
 
-$home_html = get_stylesheet_directory() . '/slc-templates/home.html';
-if ( file_exists( $home_html ) ) {
-	unlink( $home_html );
-	$slc_dir = dirname( $home_html );
-	if ( is_dir( $slc_dir ) && count( glob( $slc_dir . '/*' ) ) === 0 ) {
-		rmdir( $slc_dir );
+$uploads           = wp_upload_dir();
+$storage_directory = trailingslashit( $uploads['basedir'] ) . 'seo-links-crawler';
+$generated_files   = [
+	$storage_directory . '/home.html',
+	$storage_directory . '/sitemap.html'
+];
+
+foreach ( $generated_files as $generated_file ) {
+	if ( file_exists( $generated_file ) ) {
+		unlink( $generated_file );
 	}
 }
 
-$sitemap_html = plugin_dir_path( __FILE__ ) . 'templates/sitemap.html';
-if ( file_exists( $sitemap_html ) ) {
-	unlink( $sitemap_html );
+if ( is_dir( $storage_directory ) ) {
+	$storage_files = glob( $storage_directory . '/*' );
+	if ( false !== $storage_files && count( $storage_files ) === 0 ) {
+		rmdir( $storage_directory );
+	}
 }
 
 wp_clear_scheduled_hook( 'slc_crawl_internal_links_scheduler' );

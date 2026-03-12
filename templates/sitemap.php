@@ -2,7 +2,7 @@
 <html>
 <head>
 <?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-<link rel="stylesheet" type="text/css" href="../assets/css/sitemap.css">
+<link rel="stylesheet" type="text/css" href="<?php echo esc_url( SLC_PLUGIN_URL . '/assets/css/sitemap.css' ); ?>">
 </head>
 <body>
 <div class="container">

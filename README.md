@@ -1,12 +1,12 @@
 # SEO Links Crawler
 
-A WordPress plugin that crawls your home page, extracts all internal links, displays them in the admin dashboard, and generates a static `sitemap.html` file.
+A WordPress plugin that crawls your home page, extracts all internal links, displays them in the admin dashboard, and generates static HTML artifacts in runtime-safe storage.
 
 ## Features
 
 - **Internal link discovery** — Parses the home page HTML and identifies all internal links (absolute and relative).
 - **Admin dashboard** — One-click crawl with a clean admin UI showing all discovered links.
-- **Static sitemap.html** — Auto-generates a styled HTML sitemap from crawl results.
+- **Runtime-safe HTML output** — Auto-generates `sitemap.html` and `home.html` in uploads-backed storage instead of plugin or theme code directories.
 - **Filesystem cache** — Results are cached as JSON to avoid repeated HTTP requests.
 - **WP Cron** — Hourly automatic re-crawl to keep results fresh.
 - **Extensible** — Filter hooks (`slc_filter_all_links`, `slc_filter_internal_links`) and action hooks (`slc_before_links_crawling_action`, `slc_after_links_crawling_action`) for customisation.
@@ -27,7 +27,12 @@ A WordPress plugin that crawls your home page, extracts all internal links, disp
 1. Navigate to **SEO Links Crawler** in the WordPress admin sidebar.
 2. Click **Start Crawler** to scan the home page.
 3. Internal links are displayed in the admin panel and cached for subsequent visits.
-4. A `sitemap.html` is generated at `wp-content/plugins/seo-links-crawler/templates/sitemap.html`.
+4. Generated files are written to `wp-content/uploads/seo-links-crawler/` by default.
+
+## Runtime Storage
+
+- Default storage path: `wp-content/uploads/seo-links-crawler/`
+- Generated files now live in uploads-backed writable storage instead of plugin or theme code directories
 
 ## Architecture
 

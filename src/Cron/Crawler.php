@@ -14,18 +14,25 @@ defined( 'ABSPATH' ) || exit;
 class Crawler {
 
 	/**
-	 * Sitemap.html full path.
+	 * Directory name used under uploads for generated files.
 	 *
 	 * @var string
 	 */
-	const SITEMAP_HTML_PATH = SLC_PLUGIN_PATH . '/templates/sitemap.html';
+	const STORAGE_DIRECTORY_NAME = 'seo-links-crawler';
 
 	/**
-	 * Home.html path relative to the active theme directory.
+	 * Generated sitemap filename.
 	 *
 	 * @var string
 	 */
-	const HOME_HTML_RELATIVE_PATH = '/slc-templates/home.html';
+	const SITEMAP_HTML_FILENAME = 'sitemap.html';
+
+	/**
+	 * Generated home snapshot filename.
+	 *
+	 * @var string
+	 */
+	const HOME_HTML_FILENAME = 'home.html';
 
 	/**
 	 * @var FileSystemInterface
@@ -85,10 +92,16 @@ class Crawler {
 	 */
 	public function slc_execute_cron_crawling() {
 		$this->filesystem_cache->clean_up_cache();
-		$this->filesystem->delete_file( self::SITEMAP_HTML_PATH );
+		$generated_file_paths = array_merge(
+			[
+				$this->get_home_html_path(),
+				$this->get_sitemap_html_path(),
+			],
+		);
 
-		$home_html_path = \get_stylesheet_directory() . self::HOME_HTML_RELATIVE_PATH;
-		$this->filesystem->delete_file( $home_html_path );
+		foreach ( $generated_file_paths as $generated_file_path ) {
+			$this->filesystem->delete_file( $generated_file_path );
+		}
 
 		return $this->slc_execute_crawling();
 	}
@@ -107,10 +120,12 @@ class Crawler {
 
 		try {
 			$this->filesystem_cache->initiate_cache();
+			$this->ensure_storage_directory();
 
-			$home_url     = $this->get_home();
-			$home_content = null;
-			$file_errors  = [];
+			$home_url          = $this->get_home();
+			$home_content      = null;
+			$file_errors       = [];
+			$storage_directory = $this->get_storage_directory();
 
 			$links_result = $this->filesystem_cache->get_cache_data();
 
@@ -133,19 +148,20 @@ class Crawler {
 				}
 			}
 
-			$home_html_path = \get_stylesheet_directory() . self::HOME_HTML_RELATIVE_PATH;
+			$home_html_path = $this->get_home_html_path();
 
 			if ( ! $this->filesystem->file_exists( $home_html_path ) ) {
-				$is_home_created = $this->save_home_page_as_html( $home_content, $home_html_path );
+				$is_home_created = $this->save_home_page_as_html( $home_content );
 				if ( ! $is_home_created ) {
-					/* translators: 1: path of home.html folder */
-					$file_errors[] = sprintf( esc_html__( 'There is some error in creating home.html. Please check %1$s in active theme folder. Either it does not exist or is not writable. You can create one and change its permission manually.', 'seo-links-crawler' ), 'slc-templates' );
+					/* translators: 1: runtime storage directory */
+					$file_errors[] = sprintf( esc_html__( 'There is some error in creating home.html. Please check whether %1$s exists and is writable.', 'seo-links-crawler' ), $storage_directory );
 				}
 			}
 
 			$is_sitemap_created = $this->create_sitemap_html( $links_result );
 			if ( ! $is_sitemap_created ) {
-				$file_errors[] = esc_html__( 'There is some error in creating sitemap.html. Please try again later.', 'seo-links-crawler' );
+				/* translators: 1: runtime storage directory */
+				$file_errors[] = sprintf( esc_html__( 'There is some error in creating sitemap.html. Please check whether %1$s exists and is writable.', 'seo-links-crawler' ), $storage_directory );
 			}
 
 			if ( ! empty( $file_errors ) ) {
@@ -174,15 +190,63 @@ class Crawler {
 	 * @return bool True on success, false on failure.
 	 */
 	private function create_sitemap_html( $slc_results ) {
-		if ( $this->filesystem->file_exists( self::SITEMAP_HTML_PATH ) ) {
+		$sitemap_html_path = $this->get_sitemap_html_path();
+
+		if ( $this->filesystem->file_exists( $sitemap_html_path ) ) {
 			return true;
 		}
+
+		$this->ensure_storage_directory();
 
 		ob_start();
 		include SLC_PLUGIN_PATH . '/templates/sitemap.php';
 		$sitemap_html = ob_get_clean();
 
-		return $this->filesystem->put_file_content( self::SITEMAP_HTML_PATH, $sitemap_html );
+		return $this->filesystem->put_file_content( $sitemap_html_path, $sitemap_html );
+	}
+
+	/**
+	 * Get the uploads-backed storage directory for generated files.
+	 *
+	 * @return string
+	 */
+	private function get_storage_directory() {
+		$uploads = wp_upload_dir();
+
+		return trailingslashit( $uploads['basedir'] ) . self::STORAGE_DIRECTORY_NAME;
+	}
+
+	/**
+	 * Ensure the uploads-backed storage directory exists.
+	 *
+	 * @return bool
+	 */
+	private function ensure_storage_directory() {
+		$storage_directory = $this->get_storage_directory();
+
+		if ( is_dir( $storage_directory ) ) {
+			return true;
+		}
+
+		return wp_mkdir_p( $storage_directory );
+	}
+
+	/**
+	 * Get the generated sitemap path.
+	 *
+	 * @return string
+	 */
+	private function get_sitemap_html_path() {
+		return trailingslashit( $this->get_storage_directory() ) . self::SITEMAP_HTML_FILENAME;
+	}
+
+	/**
+	 * Get the generated home snapshot path.
+	 *
+	 * @return string
+	 */
+	private function get_home_html_path() {
+		return trailingslashit( $this->get_storage_directory() ) . self::HOME_HTML_FILENAME;
 	}
 
 	/**
@@ -193,12 +257,13 @@ class Crawler {
 	 *
 	 * @return bool True on success, false on failure.
 	 */
-	private function save_home_page_as_html( $home_contents, $home_html_path ) {
-		$home_html_file_directory = dirname( $home_html_path );
+	private function save_home_page_as_html( $home_contents ) {
+		// $home_html_file_directory = dirname( $this->get_home_html_path() );
 
-		if ( ! is_dir( $home_html_file_directory ) ) {
-			wp_mkdir_p( $home_html_file_directory );
-		}
+		// if ( ! is_dir( $home_html_file_directory ) ) {
+		// 	wp_mkdir_p( $home_html_file_directory );
+		// }
+		$this->ensure_storage_directory();
 
 		if ( null === $home_contents ) {
 			$home_contents = $this->filesystem->fetch_url( $this->get_home() );
@@ -208,7 +273,7 @@ class Crawler {
 			return false;
 		}
 
-		return $this->filesystem->put_file_content( $home_html_path, $home_contents );
+		return $this->filesystem->put_file_content( $this->get_home_html_path(), $home_contents );
 	}
 
 	/**

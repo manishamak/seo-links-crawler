@@ -83,12 +83,18 @@ function slc_init_plugin() {
 add_action( 'plugins_loaded', 'slc_init_plugin' );
 
 /**
- * Plugin activation: ensure cache directory exists.
+ * Plugin activation: ensure runtime storage directories exist.
  */
 function slc_activate_plugin() {
 	$cache_dir = WP_CONTENT_DIR . '/slc-cache/';
 	if ( ! is_dir( $cache_dir ) ) {
 		wp_mkdir_p( $cache_dir );
+	}
+
+	$uploads           = wp_upload_dir();
+	$storage_directory = trailingslashit( $uploads['basedir'] ) . 'seo-links-crawler';
+	if ( ! is_dir( $storage_directory ) ) {
+		wp_mkdir_p( $storage_directory );
 	}
 }
 register_activation_hook( SLC_PLUGIN_FILE, 'slc_activate_plugin' );
