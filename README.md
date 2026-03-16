@@ -6,7 +6,7 @@ A WordPress plugin that crawls your home page, extracts all internal links, disp
 
 - **Internal link discovery** — Parses the home page HTML and identifies all internal links (absolute and relative).
 - **Admin dashboard** — One-click crawl with a clean admin UI showing all discovered links.
-- **Runtime-safe HTML output** — Auto-generates `sitemap.html` and `home.html` in uploads-backed storage instead of plugin or theme code directories.
+- **Runtime-safe HTML output** — Auto-generates `sitemap.html` and `home.html` in uploads-backed storage.
 - **Filesystem cache** — Results are cached as JSON to avoid repeated HTTP requests.
 - **WP Cron** — Hourly automatic re-crawl to keep results fresh.
 - **Extensible** — Filter hooks (`slc_filter_all_links`, `slc_filter_internal_links`) and action hooks (`slc_before_links_crawling_action`, `slc_after_links_crawling_action`) for customisation.
@@ -32,25 +32,37 @@ A WordPress plugin that crawls your home page, extracts all internal links, disp
 ## Runtime Storage
 
 - Default storage path: `wp-content/uploads/seo-links-crawler/`
-- Generated files now live in uploads-backed writable storage instead of plugin or theme code directories
+- Generated files live in uploads-backed writable storage.
 
 ## Architecture
 
 ```
 src/
-├── Admin/              Admin page registration and asset enqueuing
-├── Cache/              Filesystem-based JSON cache
-├── Contracts/          Interfaces (FileSystem, Cache, HtmlParser, LinksFinder)
-├── Container/          Simple DI container with singleton support
-├── Cron/               WP Cron crawler and AJAX handler
-├── File_Operation/     WP_Filesystem wrapper + wp_remote_get
-├── Html_Parser/        DOMDocument-based link extractor
-├── Autoloader.php      Composer autoloader bootstrap
-└── LinksFinder.php     Internal link detection and normalisation
+├── Admin/
+│   ├── AdminPage.php         Menu, template, and asset enqueuing
+│   └── AjaxHandler.php       AJAX endpoints for crawl and status
+├── Cache/
+│   └── FilesystemCache.php   JSON-based file cache
+├── Contracts/                Interfaces (FileSystem, Cache, HtmlParser, LinksFinder)
+├── Container/                Simple DI container with singleton support
+├── Cron/
+│   ├── CrawlLock.php         Transient-based concurrency lock
+│   ├── CrawlMeta.php         Last-run metadata tracking
+│   ├── CrawlOrchestrator.php Pure crawl logic (fetch → parse → cache → generate)
+│   └── CrawlScheduler.php    WP Cron lifecycle (schedule, execute, unschedule)
+├── File_Operation/
+│   └── WPFilesystem.php      WP_Filesystem wrapper + wp_remote_get
+├── Html_Parser/
+│   └── DomDocumentParser.php DOMDocument-based link extractor
+├── Storage/
+│   └── StorageManager.php    Uploads-backed file generation (sitemap, home snapshot)
+├── Autoloader.php            Composer autoloader bootstrap
+└── LinksFinder.php           Internal link detection and URL normalisation
 ```
 
 ### Design Decisions
 
+- **Single Responsibility** — Each class has one clear job: locking, metadata, storage, orchestration, scheduling, or AJAX handling.
 - **Interface-driven DI** — All major classes depend on contracts, making them testable and swappable.
 - **No jQuery** — Admin JS uses vanilla JavaScript with the Fetch API.
 - **JSON cache** — Avoids PHP object injection risks from `unserialize()`.

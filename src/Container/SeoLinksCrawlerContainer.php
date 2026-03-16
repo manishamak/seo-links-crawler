@@ -2,35 +2,38 @@
 
 namespace Slc\SeoLinksCrawler\Container;
 
+use Slc\SeoLinksCrawler\Contracts\CacheInterface;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
+use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
 use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
 use Slc\SeoLinksCrawler\Cache\FilesystemCache;
 use Slc\SeoLinksCrawler\LinksFinder;
-use Slc\SeoLinksCrawler\Cron\Crawler;
 
 /**
- * Plugin-specific container with pre-registered dependencies.
+ * Plugin-specific container with interface → implementation bindings.
+ *
+ * Only interface bindings need to be registered. Concrete classes
+ * (StorageManager, CrawlOrchestrator, etc.) are auto-resolved from
+ * their constructor type-hints.
  */
 class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 
-	/**
-	 * Constructor: register all plugin dependencies.
-	 */
 	public function __construct() {
-		$this->register_dependencies();
+		$this->register_bindings();
 	}
 
 	/**
-	 * Register plugin class dependencies.
+	 * Map each contract to its concrete implementation.
 	 *
 	 * WPFilesystem and DomDocumentParser are shared (singletons) because
 	 * they hold stateful resources that should not be duplicated.
 	 */
-	protected function register_dependencies() {
-		$this->register( 'WPFilesystem', WPFilesystem::class, true );
-		$this->register( 'DomDocumentParser', DomDocumentParser::class, true );
-		$this->register( 'FilesystemCache', FilesystemCache::class );
-		$this->register( 'LinksFinder', LinksFinder::class );
-		$this->register( 'Crawler', Crawler::class );
+	protected function register_bindings() {
+		$this->bind( FileSystemInterface::class, WPFilesystem::class, true );
+		$this->bind( HtmlParserInterface::class, DomDocumentParser::class, true );
+		$this->bind( CacheInterface::class, FilesystemCache::class );
+		$this->bind( LinksFinderInterface::class, LinksFinder::class );
 	}
 }

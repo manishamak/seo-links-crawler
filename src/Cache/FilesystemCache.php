@@ -40,7 +40,8 @@ class FilesystemCache implements CacheInterface {
 	 */
 	public function __construct( FileSystemInterface $filesystem ) {
 		$this->filesystem      = $filesystem;
-		$this->cache_directory = WP_CONTENT_DIR . '/slc-cache/';
+		$uploads               = wp_upload_dir();
+		$this->cache_directory = trailingslashit( $uploads['basedir'] ) . 'seo-links-crawler/';
 		$this->cache_file_path = $this->cache_directory . 'cached-home-connected-links.json';
 	}
 

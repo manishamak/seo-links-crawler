@@ -75,6 +75,24 @@
 		return fragment;
 	}
 
+	/**
+	 * Update the status bar text and CSS modifier.
+	 *
+	 * @param {string} text    Status message to display.
+	 * @param {string} variant One of 'running', 'success', 'error', 'none'.
+	 */
+	function updateStatusBar( text, variant ) {
+		const bar = document.querySelector( '.slc-status-bar' );
+		if ( ! bar ) {
+			return;
+		}
+		const span = document.createElement( 'span' );
+		span.className = 'slc-status slc-status--' + variant;
+		span.textContent = text;
+		bar.innerHTML = '';
+		bar.appendChild( span );
+	}
+
 	function handleCrawlClick( e ) {
 		e.preventDefault();
 
@@ -85,9 +103,15 @@
 			return;
 		}
 
+		if ( slcAdminObj.isLocked ) {
+			showNotice( slcAdminObj.lockedMsg, 'warning' );
+			return;
+		}
+
 		resultWrap.innerHTML = '';
 		btn.classList.add( 'loading', 'disabled' );
 		btn.innerHTML = '<span class="slc-spinner"></span>' + escapeHtml( slcAdminObj.loading );
+		updateStatusBar( slcAdminObj.loading + '…', 'running' );
 
 		const formData = new FormData();
 		formData.append( 'action', 'slc_admin_display_links' );
@@ -107,15 +131,25 @@
 						showNotice( res.data.file_error, 'error' );
 					}
 					resultWrap.appendChild( renderLinks( res.data.result ) );
+
+					var meta = res.data.crawl_meta;
+					if ( meta ) {
+						var count = meta.link_count || 0;
+						updateStatusBar( count + ' links found just now.', 'success' );
+					}
+					slcAdminObj.isLocked = false;
 				} else {
-					const p = document.createElement( 'p' );
+					var p = document.createElement( 'p' );
 					p.className = 'slc-error-message';
 					p.textContent = res.data;
 					resultWrap.appendChild( p );
+					updateStatusBar( res.data, 'error' );
+					slcAdminObj.isLocked = false;
 				}
 			} )
 			.catch( function( error ) {
 				showNotice( error.message || 'An unexpected error occurred.', 'error' );
+				slcAdminObj.isLocked = false;
 			} )
 			.finally( function() {
 				btn.classList.remove( 'loading', 'disabled' );
@@ -126,6 +160,9 @@
 	document.addEventListener( 'DOMContentLoaded', function() {
 		const crawlBtn = document.querySelector( '.slc-button-action' );
 		if ( crawlBtn ) {
+			if ( slcAdminObj.isLocked ) {
+				crawlBtn.classList.add( 'disabled' );
+			}
 			crawlBtn.addEventListener( 'click', handleCrawlClick );
 		}
 	} );

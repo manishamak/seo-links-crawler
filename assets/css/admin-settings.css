@@ -74,3 +74,43 @@ a.slc-button-action.loading {
 	color: #d63638;
 	font-weight: 600;
 }
+
+/* Crawl status bar */
+
+.slc-status-bar {
+	margin: 16px 0 0;
+}
+
+.slc-status {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 3px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.slc-status--running {
+	color: #996800;
+	background: #fcf0c8;
+}
+
+.slc-status--success {
+	color: #00450c;
+	background: #d1f5d9;
+}
+
+.slc-status--error {
+	color: #8a1116;
+	background: #fce4e4;
+}
+
+.slc-status--none {
+	color: #50575e;
+	background: #f0f0f1;
+}
+
+a.slc-button-action.disabled {
+	opacity: 0.6;
+	pointer-events: none;
+	cursor: default;
+}
