@@ -2,9 +2,12 @@
 
 namespace Slc\SeoLinksCrawler\Admin;
 
+use Slc\SeoLinksCrawler\Contracts\CacheInterface;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Cron\CrawlLock;
 use Slc\SeoLinksCrawler\Cron\CrawlMeta;
 use Slc\SeoLinksCrawler\Cron\CrawlOrchestrator;
+use Slc\SeoLinksCrawler\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -29,18 +32,42 @@ class AjaxHandler {
 	private $meta;
 
 	/**
-	 * @param CrawlOrchestrator $orchestrator Crawl orchestrator.
-	 * @param CrawlLock         $lock         Lock manager.
-	 * @param CrawlMeta         $meta         Metadata tracker.
+	 * @var CacheInterface
+	 */
+	private $cache;
+
+	/**
+	 * @var FileSystemInterface
+	 */
+	private $filesystem;
+
+	/**
+	 * @var StorageManager
+	 */
+	private $storage;
+
+	/**
+	 * @param CrawlOrchestrator  $orchestrator Crawl orchestrator.
+	 * @param CrawlLock          $lock         Lock manager.
+	 * @param CrawlMeta          $meta         Metadata tracker.
+	 * @param CacheInterface     $cache        Cache instance.
+	 * @param FileSystemInterface $filesystem  File system instance.
+	 * @param StorageManager     $storage      Storage manager.
 	 */
 	public function __construct(
 		CrawlOrchestrator $orchestrator,
 		CrawlLock $lock,
-		CrawlMeta $meta
+		CrawlMeta $meta,
+		CacheInterface $cache,
+		FileSystemInterface $filesystem,
+		StorageManager $storage
 	) {
 		$this->orchestrator = $orchestrator;
 		$this->lock         = $lock;
 		$this->meta         = $meta;
+		$this->cache        = $cache;
+		$this->filesystem   = $filesystem;
+		$this->storage      = $storage;
 	}
 
 	/**
@@ -49,6 +76,7 @@ class AjaxHandler {
 	public function register_hooks() {
 		add_action( 'wp_ajax_slc_admin_display_links', [ $this, 'handle_crawl' ] );
 		add_action( 'wp_ajax_slc_crawl_status', [ $this, 'handle_status' ] );
+		add_action( 'wp_ajax_slc_clear_cache', [ $this, 'handle_clear_cache' ] );
 	}
 
 	/**
@@ -116,6 +144,25 @@ class AjaxHandler {
 		wp_send_json_success( [
 			'is_locked' => CrawlLock::is_locked(),
 			'meta'      => CrawlMeta::get_last(),
+		] );
+	}
+
+	/**
+	 * AJAX: clear the cached crawl data and generated HTML files.
+	 */
+	public function handle_clear_cache() {
+		check_ajax_referer( 'slc-admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( esc_html__( 'You do not have permission to perform this action.', 'seo-links-crawler' ) );
+		}
+
+		$this->cache->clean_up_cache();
+		$this->filesystem->delete_file( $this->storage->get_home_html_path() );
+		$this->filesystem->delete_file( $this->storage->get_sitemap_path() );
+
+		wp_send_json_success( [
+			'message' => esc_html__( 'Cache cleared successfully.', 'seo-links-crawler' ),
 		] );
 	}
 }

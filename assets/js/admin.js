@@ -157,6 +157,47 @@
 			} );
 	}
 
+	function handleClearClick() {
+		const btn        = document.querySelector( '.slc-button-clear' );
+		const resultWrap = document.querySelector( '.slc-links-wrap' );
+
+		if ( btn.disabled ) {
+			return;
+		}
+
+		btn.disabled    = true;
+		btn.textContent = slcAdminObj.clearing;
+
+		const formData = new FormData();
+		formData.append( 'action', 'slc_clear_cache' );
+		formData.append( 'nonce', slcAdminObj.nonce );
+
+		fetch( slcAdminObj.ajaxurl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			body: formData,
+		} )
+			.then( function( response ) {
+				return response.json();
+			} )
+			.then( function( res ) {
+				if ( res.success ) {
+					resultWrap.innerHTML = '';
+					showNotice( res.data.message, 'success' );
+					updateStatusBar( res.data.message, 'none' );
+				} else {
+					showNotice( res.data || 'Failed to clear cache.', 'error' );
+				}
+			} )
+			.catch( function( error ) {
+				showNotice( error.message || 'An unexpected error occurred.', 'error' );
+			} )
+			.finally( function() {
+				btn.disabled    = false;
+				btn.textContent = slcAdminObj.clearBtnText;
+			} );
+	}
+
 	document.addEventListener( 'DOMContentLoaded', function() {
 		const crawlBtn = document.querySelector( '.slc-button-action' );
 		if ( crawlBtn ) {
@@ -164,6 +205,11 @@
 				crawlBtn.classList.add( 'disabled' );
 			}
 			crawlBtn.addEventListener( 'click', handleCrawlClick );
+		}
+
+		const clearBtn = document.querySelector( '.slc-button-clear' );
+		if ( clearBtn ) {
+			clearBtn.addEventListener( 'click', handleClearClick );
 		}
 	} );
 } )( document );

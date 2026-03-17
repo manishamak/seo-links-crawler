@@ -13,6 +13,29 @@ defined( 'ABSPATH' ) || exit;
 class AdminPage {
 
 	/**
+	 * @var CrawlLock
+	 */
+	private $lock;
+
+	/**
+	 * @var CrawlMeta
+	 */
+	private $meta;
+	/**
+	 * @var string
+	 */
+	private $page_hook_suffix;
+
+	/**
+	 * @param CrawlLock $lock Lock manager.
+	 * @param CrawlMeta $meta Metadata provider.
+	 */
+	public function __construct( CrawlLock $lock, CrawlMeta $meta ) {
+		$this->lock = $lock;
+		$this->meta = $meta;
+	}
+
+	/**
 	 * Register WordPress hooks for the admin UI.
 	 */
 	public function register_hooks() {
@@ -24,7 +47,7 @@ class AdminPage {
 	 * Add settings page in admin dashboard.
 	 */
 	public function slc_register_page() {
-		add_menu_page(
+		$this->page_hook_suffix = add_menu_page(
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			'manage_options',
@@ -38,12 +61,13 @@ class AdminPage {
 	 * Admin settings page callback function.
 	 */
 	public function slc_page_handler() {
-		$is_locked = CrawlLock::is_locked();
-		$meta      = CrawlMeta::get_last();
+		$is_locked = $this->lock->is_locked();
+		$meta      = $this->meta->get_last();
 		?>
 		<div class="slc-wrap">
 			<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
 			<a href="#" class="slc-button-action<?php echo $is_locked ? ' disabled' : ''; ?>"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
+			<button type="button" class="slc-button-clear"><?php echo esc_html__( 'Clear Cache', 'seo-links-crawler' ); ?></button>
 
 			<div class="slc-status-bar" aria-live="polite">
 				<?php $this->render_status( $meta, $is_locked ); ?>
@@ -71,7 +95,7 @@ class AdminPage {
 			);
 			return;
 		}
-		
+
 		if ( $is_locked || 'running' === $status ) {
 			printf(
 				'<span class="slc-status slc-status--running">%s</span>',
@@ -116,37 +140,45 @@ class AdminPage {
 
 	/**
 	 * Enqueue assets on the plugin's admin page only.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 * @return void
 	 */
-	public function slc_admin_assets() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['page'] ) && ! empty( $_GET['page'] ) && 'seo-links-crawler' === $_GET['page'] ) {
-			wp_enqueue_script(
-				'slc-admin-script',
-				SLC_PLUGIN_URL . '/assets/js/admin.js',
-				[],
-				SLC_VERSION,
-				true
-			);
-
-			wp_enqueue_style(
-				'slc-admin-style',
-				SLC_PLUGIN_URL . '/assets/css/admin-settings.css',
-				[],
-				SLC_VERSION
-			);
-
-			wp_localize_script(
-				'slc-admin-script',
-				'slcAdminObj',
-				[
-					'ajaxurl'      => admin_url( 'admin-ajax.php' ),
-					'nonce'        => wp_create_nonce( 'slc-admin' ),
-					'loading'      => esc_html__( 'Loading', 'seo-links-crawler' ),
-					'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' ),
-					'isLocked'     => CrawlLock::is_locked(),
-					'lockedMsg'    => esc_html__( 'A crawl is already in progress. Please wait and try again.', 'seo-links-crawler' ),
-				]
-			);
+	public function slc_admin_assets($hook_suffix)
+	{
+		if ( $this->page_hook_suffix !== $hook_suffix ) {
+			return;
 		}
+
+		wp_enqueue_script(
+			'slc-admin-script',
+			SLC_PLUGIN_URL . '/assets/js/admin.js',
+			[],
+			SLC_VERSION,
+			true
+		);
+
+		wp_enqueue_style(
+			'slc-admin-style',
+			SLC_PLUGIN_URL . '/assets/css/admin-settings.css',
+			[],
+			SLC_VERSION
+		);
+
+		wp_localize_script(
+			'slc-admin-script',
+			'slcAdminObj',
+			[
+				'ajaxurl' => admin_url('admin-ajax.php'),
+				'nonce' => wp_create_nonce('slc-admin'),
+				'loading' => esc_html__('Loading', 'seo-links-crawler'),
+				'resetBtnText' => esc_html__('Start Crawler', 'seo-links-crawler'),
+				'isLocked' => $this->lock->is_locked(),
+				'lockedMsg' => esc_html__('A crawl is already in progress. Please wait and try again.', 'seo-links-crawler'),
+				'clearing' => esc_html__('Clearing…', 'seo-links-crawler'),
+				'clearBtnText' => esc_html__('Clear Cache', 'seo-links-crawler'),
+			]
+		);
 	}
 }
+

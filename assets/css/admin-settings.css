@@ -114,3 +114,27 @@ a.slc-button-action.disabled {
 	pointer-events: none;
 	cursor: default;
 }
+
+.slc-button-clear {
+	padding: 8px 16px;
+	margin-left: 8px;
+	border: 1px solid #8c8f94;
+	border-radius: 2px;
+	background: #f6f7f7;
+	color: #50575e;
+	font-weight: 600;
+	font-size: 14px;
+	line-height: normal;
+	cursor: pointer;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+
+.slc-button-clear:hover {
+	background: #dcdcde;
+	color: #1d2327;
+}
+
+.slc-button-clear:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
