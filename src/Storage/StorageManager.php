@@ -11,16 +11,20 @@ defined( 'ABSPATH' ) || exit;
  */
 class StorageManager {
 
-	const DIRECTORY_NAME      = 'seo-links-crawler';
-	const SITEMAP_FILENAME    = 'sitemap.html';
-	const HOME_HTML_FILENAME  = 'home.html';
+	const DIRECTORY_NAME     = 'seo-links-crawler';
+	const SITEMAP_FILENAME   = 'sitemap.html';
+	const HOME_HTML_FILENAME = 'home.html';
 
 	/**
+	 * File system abstraction used for storage operations.
+	 *
 	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
 	/**
+	 * Constructor.
+	 *
 	 * @param FileSystemInterface $filesystem File system instance.
 	 */
 	public function __construct( FileSystemInterface $filesystem ) {
@@ -107,6 +111,14 @@ class StorageManager {
 		}
 
 		$this->ensure_directory();
+
+		$sitemap_css = $this->filesystem->get_file_content( SLC_PLUGIN_PATH . '/assets/css/sitemap.css' );
+		if ( ! is_string( $sitemap_css ) ) {
+			$sitemap_css = '';
+		}
+
+		// Normalize array keys before rendering the template.
+		$slc_results = array_values( $slc_results );
 
 		ob_start();
 		include SLC_PLUGIN_PATH . '/templates/sitemap.php';

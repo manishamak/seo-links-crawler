@@ -37,15 +37,15 @@ class DependencyInjectionContainer {
 	/**
 	 * Map an abstract (interface or key) to a concrete class.
 	 *
-	 * @param string $abstract Interface or identifier.
+	 * @param string $service_id Interface or identifier.
 	 * @param string $concrete Fully-qualified concrete class name.
 	 * @param bool   $shared   Return the same instance on every resolve.
 	 */
-	public function bind( string $abstract, string $concrete, bool $shared = false ) {
-		$this->bindings[ $abstract ] = $concrete;
+	public function bind( string $service_id, string $concrete, bool $shared = false ) {
+		$this->bindings[ $service_id ] = $concrete;
 
 		if ( $shared ) {
-			$this->shared[ $abstract ] = true;
+			$this->shared[ $service_id ] = true;
 		}
 	}
 
@@ -58,18 +58,18 @@ class DependencyInjectionContainer {
 	 * 3. Use Reflection to read constructor parameter type-hints and
 	 *    recursively resolve each dependency.
 	 *
-	 * @param string $abstract Interface, key, or concrete class name.
+	 * @param string $service_id Interface, key, or concrete class name.
 	 *
 	 * @return object Resolved instance.
 	 *
 	 * @throws \RuntimeException If a parameter cannot be resolved.
 	 */
-	public function get( string $abstract ) {
-		if ( isset( $this->instances[ $abstract ] ) ) {
-			return $this->instances[ $abstract ];
+	public function get( string $service_id ) {
+		if ( isset( $this->instances[ $service_id ] ) ) {
+			return $this->instances[ $service_id ];
 		}
 
-		$concrete = $this->bindings[ $abstract ] ?? $abstract;
+		$concrete = $this->bindings[ $service_id ] ?? $service_id;
 
 		$reflection  = new \ReflectionClass( $concrete );
 		$constructor = $reflection->getConstructor();
@@ -81,8 +81,8 @@ class DependencyInjectionContainer {
 			$instance     = $reflection->newInstanceArgs( $dependencies );
 		}
 
-		if ( ! empty( $this->shared[ $abstract ] ) ) {
-			$this->instances[ $abstract ] = $instance;
+		if ( ! empty( $this->shared[ $service_id ] ) ) {
+			$this->instances[ $service_id ] = $instance;
 		}
 
 		return $instance;
@@ -117,8 +117,8 @@ class DependencyInjectionContainer {
 			throw new \RuntimeException(
 				sprintf(
 					'Cannot auto-resolve parameter $%s in %s.',
-					$param->getName(),
-					$concrete
+					htmlspecialchars( $param->getName(), ENT_QUOTES, 'UTF-8' ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+					htmlspecialchars( $concrete, ENT_QUOTES, 'UTF-8' ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 				)
 			);
 		}

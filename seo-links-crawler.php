@@ -40,7 +40,7 @@ if ( ! defined( 'SLC_PLUGIN_URL' ) ) {
 }
 
 if ( ! defined( 'SLC_VERSION' ) ) {
-	define( 'SLC_VERSION', '1.1.0' );
+	define( 'SLC_VERSION', '1.0.0' );
 }
 
 require SLC_PLUGIN_PATH . '/src/Autoloader.php';

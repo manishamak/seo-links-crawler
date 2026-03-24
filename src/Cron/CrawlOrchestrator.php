@@ -19,26 +19,36 @@ defined( 'ABSPATH' ) || exit;
 class CrawlOrchestrator {
 
 	/**
+	 * File system abstraction for read/write and HTTP fetch operations.
+	 *
 	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
 	/**
+	 * Internal-links extraction service.
+	 *
 	 * @var LinksFinderInterface
 	 */
 	private $links_finder;
 
 	/**
+	 * Persistent crawl cache storage.
+	 *
 	 * @var CacheInterface
 	 */
 	private $cache;
 
 	/**
+	 * Manager for generated storage artifacts.
+	 *
 	 * @var StorageManager
 	 */
 	private $storage;
 
 	/**
+	 * Constructor.
+	 *
 	 * @param FileSystemInterface  $filesystem   File system instance.
 	 * @param LinksFinderInterface $links_finder  Links finder instance.
 	 * @param CacheInterface       $cache         Cache instance.
@@ -66,6 +76,8 @@ class CrawlOrchestrator {
 	 *     @type array  $links      List of internal link URLs.
 	 *     @type string $file_error Concatenated file-creation warnings (may be empty).
 	 * }
+	 *
+	 * @throws \Exception When crawl prerequisites or parsing fail.
 	 */
 	public function crawl() {
 		$file_error = '';

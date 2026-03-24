@@ -20,6 +20,9 @@ use Slc\SeoLinksCrawler\LinksFinder;
  */
 class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 
+	/**
+	 * Constructor.
+	 */
 	public function __construct() {
 		$this->register_bindings();
 	}

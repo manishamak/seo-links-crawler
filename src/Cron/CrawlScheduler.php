@@ -17,42 +17,56 @@ class CrawlScheduler {
 	const CRON_HOOK = 'slc_crawl_internal_links_scheduler';
 
 	/**
+	 * Crawl orchestration service.
+	 *
 	 * @var CrawlOrchestrator
 	 */
 	private $orchestrator;
 
 	/**
+	 * Crawl lock manager.
+	 *
 	 * @var CrawlLock
 	 */
 	private $lock;
 
 	/**
+	 * Crawl metadata manager.
+	 *
 	 * @var CrawlMeta
 	 */
 	private $meta;
 
 	/**
+	 * Cache storage service.
+	 *
 	 * @var CacheInterface
 	 */
 	private $cache;
 
 	/**
+	 * File system abstraction.
+	 *
 	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
 	/**
+	 * Storage manager for generated files.
+	 *
 	 * @var StorageManager
 	 */
 	private $storage;
 
 	/**
-	 * @param CrawlOrchestrator  $orchestrator Crawl orchestrator.
-	 * @param CrawlLock          $lock         Lock manager.
-	 * @param CrawlMeta          $meta         Metadata tracker.
-	 * @param CacheInterface     $cache        Cache instance.
+	 * Constructor.
+	 *
+	 * @param CrawlOrchestrator   $orchestrator Crawl orchestrator.
+	 * @param CrawlLock           $lock         Lock manager.
+	 * @param CrawlMeta           $meta         Metadata tracker.
+	 * @param CacheInterface      $cache        Cache instance.
 	 * @param FileSystemInterface $filesystem  File system instance.
-	 * @param StorageManager     $storage      Storage manager.
+	 * @param StorageManager      $storage      Storage manager.
 	 */
 	public function __construct(
 		CrawlOrchestrator $orchestrator,
@@ -90,13 +104,16 @@ class CrawlScheduler {
 			);
 		}
 
-		$this->meta->update( [
-			'started_at' => time(),
-			'status'     => 'running',
-			'source'     => 'cron',
-		] );
+		$this->meta->update(
+			[
+				'started_at' => time(),
+				'status'     => 'running',
+				'source'     => 'cron',
+			]
+		);
 
 		try {
+			$previous_cache = $this->cache->get_cache_data();
 			$this->cache->clean_up_cache();
 
 			$stale_files = [
@@ -110,15 +127,21 @@ class CrawlScheduler {
 
 			$result = $this->orchestrator->crawl();
 
+			if ( is_wp_error( $result ) && ! empty( $previous_cache ) ) {
+				$this->cache->cache_data( $previous_cache );
+			}
+
 			$this->meta->record_finished( $result );
 
 			return $result;
 		} catch ( \Exception $e ) {
-			$this->meta->update( [
-				'finished_at' => time(),
-				'status'      => 'error',
-				'error'       => $e->getMessage(),
-			] );
+			$this->meta->update(
+				[
+					'finished_at' => time(),
+					'status'      => 'error',
+					'error'       => $e->getMessage(),
+				]
+			);
 
 			return new \WP_Error( 'crawl_error', $e->getMessage() );
 		} finally {

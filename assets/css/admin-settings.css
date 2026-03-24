@@ -8,7 +8,7 @@
 	margin-bottom: 50px;
 }
 
-a.slc-button-action {
+.slc-button-action {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -26,12 +26,12 @@ a.slc-button-action {
 	transition: background 0.2s ease, color 0.2s ease;
 }
 
-a.slc-button-action:hover {
+.slc-button-action:hover {
 	color: #fff;
 	background: #2271b1;
 }
 
-a.slc-button-action.loading {
+.slc-button-action.loading {
 	color: #fff;
 	background: #2271b1;
 	pointer-events: none;
@@ -109,7 +109,7 @@ a.slc-button-action.loading {
 	background: #f0f0f1;
 }
 
-a.slc-button-action.disabled {
+.slc-button-action.disabled {
 	opacity: 0.6;
 	pointer-events: none;
 	cursor: default;

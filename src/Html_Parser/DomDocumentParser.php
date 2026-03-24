@@ -15,7 +15,7 @@ class DomDocumentParser extends DOMDocument implements HtmlParserInterface {
 	 *
 	 * @param string $html HTML content.
 	 */
-	public function loadHTMLDocument( $html ) {
+	public function load_html_document( $html ) {
 		$this->loadHTML( $html, LIBXML_NOERROR | LIBXML_NOWARNING );
 	}
 

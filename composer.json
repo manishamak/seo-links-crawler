@@ -10,7 +10,7 @@
 	],
 	"type": "wordpress-plugin",
 	"require": {
-		"php": ">=7.4"
+		"php": ">=8.3"
 	},
 	"config": {
 		"sort-packages": true,
@@ -20,9 +20,9 @@
 	},
 	"require-dev": {
 		"brain/monkey": "^2.0",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
 		"phpcompatibility/phpcompatibility-wp": "^2.0",
-		"phpunit/phpunit": "^9.0",
+		"phpunit/phpunit": "^11.0",
 		"wp-coding-standards/wpcs": "^3.0"
 	},
 	"autoload": {
@@ -37,7 +37,7 @@
 	},
 	"scripts": {
 		"test-unit": "phpunit --testsuite unit",
-		"phpcs": "phpcs --basepath=.",
-		"phpcs:fix": "phpcbf --basepath=."
+		"phpcs": "phpcs --basepath=. src templates seo-links-crawler.php",
+		"phpcs:fix": "phpcbf --basepath=. src templates seo-links-crawler.php"
 	}
 }

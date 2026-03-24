@@ -12,7 +12,7 @@ interface HtmlParserInterface {
 	 *
 	 * @param string $html HTML content.
 	 */
-	public function loadHTMLDocument( $html );
+	public function load_html_document( $html );
 
 	/**
 	 * Extract all link href values from the loaded document.

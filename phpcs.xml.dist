@@ -13,7 +13,7 @@
 	<arg name="extensions" value="php"/>
 
 	<rule ref="PHPCompatibility"/>
-	<config name="testVersion" value="7.4-"/>
+	<config name="testVersion" value="8.3-"/>
 	<config name="minimum_supported_wp_version" value="5.0"/>
 
 	<rule ref="WordPress">
@@ -21,7 +21,7 @@
 		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log" />
 	</rule>
 
-	<rule ref="WordPress.WP.I18n">
+	<!-- <rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array" value="seo-links-crawler" />
 		</properties>
@@ -31,7 +31,7 @@
 		<properties>
 			<property name="prefixes" type="array" value="slc,SLC" />
 		</properties>
-	</rule>
+	</rule> -->
 
 	<rule ref="WordPress.Files.FileName">
 		<properties>
@@ -47,7 +47,9 @@
 
 	<rule ref="WordPress-Extra">
 		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 		<exclude name="WordPress.PHP.DisallowShortTernary.Found"/>
+		<exclude name="Universal.Operators.DisallowShortTernary.Found"/>
 	</rule>
 
 	<rule ref="Generic.Arrays.DisallowLongArraySyntax" />

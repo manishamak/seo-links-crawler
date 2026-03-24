@@ -30,20 +30,24 @@ class CrawlMeta {
 	 */
 	public function record_finished( $result ) {
 		if ( is_wp_error( $result ) ) {
-			$this->update( [
-				'finished_at' => time(),
-				'status'      => 'error',
-				'error'       => $result->get_error_message(),
-			] );
+			$this->update(
+				[
+					'finished_at' => time(),
+					'status'      => 'error',
+					'error'       => $result->get_error_message(),
+				]
+			);
 			return;
 		}
 
-		$this->update( [
-			'finished_at' => time(),
-			'status'      => 'success',
-			'link_count'  => is_array( $result['links'] ) ? count( $result['links'] ) : 0,
-			'error'       => $result['file_error'] ?: '',
-		] );
+		$this->update(
+			[
+				'finished_at' => time(),
+				'status'      => 'success',
+				'link_count'  => is_array( $result['links'] ) ? count( $result['links'] ) : 0,
+				'error'       => $result['file_error'] ?: '',
+			]
+		);
 	}
 
 	/**
@@ -61,5 +65,4 @@ class CrawlMeta {
 	public static function get_last() {
 		return get_option( self::OPTION_KEY, [] );
 	}
-
 }

@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-<link rel="stylesheet" type="text/css" href="<?php echo esc_url( SLC_PLUGIN_URL . '/assets/css/sitemap.css' ); ?>">
+<style>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php echo $sitemap_css; ?>
+</style>
 </head>
 <body>
 <div class="container">

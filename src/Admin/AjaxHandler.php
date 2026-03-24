@@ -17,42 +17,56 @@ defined( 'ABSPATH' ) || exit;
 class AjaxHandler {
 
 	/**
+	 * Crawl orchestration service.
+	 *
 	 * @var CrawlOrchestrator
 	 */
 	private $orchestrator;
 
 	/**
+	 * Crawl lock manager.
+	 *
 	 * @var CrawlLock
 	 */
 	private $lock;
 
 	/**
+	 * Crawl metadata manager.
+	 *
 	 * @var CrawlMeta
 	 */
 	private $meta;
 
 	/**
+	 * Cache storage service.
+	 *
 	 * @var CacheInterface
 	 */
 	private $cache;
 
 	/**
+	 * File system abstraction.
+	 *
 	 * @var FileSystemInterface
 	 */
 	private $filesystem;
 
 	/**
+	 * Storage manager for generated artifacts.
+	 *
 	 * @var StorageManager
 	 */
 	private $storage;
 
 	/**
-	 * @param CrawlOrchestrator  $orchestrator Crawl orchestrator.
-	 * @param CrawlLock          $lock         Lock manager.
-	 * @param CrawlMeta          $meta         Metadata tracker.
-	 * @param CacheInterface     $cache        Cache instance.
+	 * Constructor.
+	 *
+	 * @param CrawlOrchestrator   $orchestrator Crawl orchestrator.
+	 * @param CrawlLock           $lock         Lock manager.
+	 * @param CrawlMeta           $meta         Metadata tracker.
+	 * @param CacheInterface      $cache        Cache instance.
 	 * @param FileSystemInterface $filesystem  File system instance.
-	 * @param StorageManager     $storage      Storage manager.
+	 * @param StorageManager      $storage      Storage manager.
 	 */
 	public function __construct(
 		CrawlOrchestrator $orchestrator,
@@ -96,20 +110,24 @@ class AjaxHandler {
 			wp_send_json_error( esc_html__( 'A crawl is already in progress. Please wait and try again.', 'seo-links-crawler' ) );
 		}
 
-		$this->meta->update( [
-			'started_at' => time(),
-			'status'     => 'running',
-			'source'     => 'admin',
-		] );
+		$this->meta->update(
+			[
+				'started_at' => time(),
+				'status'     => 'running',
+				'source'     => 'admin',
+			]
+		);
 
 		$results = $this->orchestrator->crawl();
 
 		if ( is_wp_error( $results ) ) {
-			$this->meta->update( [
-				'finished_at' => time(),
-				'status'      => 'error',
-				'error'       => $results->get_error_message(),
-			] );
+			$this->meta->update(
+				[
+					'finished_at' => time(),
+					'status'      => 'error',
+					'error'       => $results->get_error_message(),
+				]
+			);
 			$this->lock->release();
 			wp_send_json_error( $results->get_error_message() );
 		}
@@ -124,11 +142,13 @@ class AjaxHandler {
 		$this->meta->update( $meta_data );
 
 		$this->lock->release();
-		wp_send_json_success( [
-			'result'     => $results['links'],
-			'file_error' => $results['file_error'],
-			'crawl_meta' => $meta_data,
-		] );
+		wp_send_json_success(
+			[
+				'result'     => $results['links'],
+				'file_error' => $results['file_error'],
+				'crawl_meta' => $meta_data,
+			]
+		);
 	}
 
 	/**
@@ -141,10 +161,12 @@ class AjaxHandler {
 			wp_send_json_error( esc_html__( 'You do not have permission to perform this action.', 'seo-links-crawler' ) );
 		}
 
-		wp_send_json_success( [
-			'is_locked' => CrawlLock::is_locked(),
-			'meta'      => CrawlMeta::get_last(),
-		] );
+		wp_send_json_success(
+			[
+				'is_locked' => CrawlLock::is_locked(),
+				'meta'      => CrawlMeta::get_last(),
+			]
+		);
 	}
 
 	/**
@@ -161,8 +183,10 @@ class AjaxHandler {
 		$this->filesystem->delete_file( $this->storage->get_home_html_path() );
 		$this->filesystem->delete_file( $this->storage->get_sitemap_path() );
 
-		wp_send_json_success( [
-			'message' => esc_html__( 'Cache cleared successfully.', 'seo-links-crawler' ),
-		] );
+		wp_send_json_success(
+			[
+				'message' => esc_html__( 'Cache cleared successfully.', 'seo-links-crawler' ),
+			]
+		);
 	}
 }

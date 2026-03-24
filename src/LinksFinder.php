@@ -12,11 +12,15 @@ use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 class LinksFinder implements LinksFinderInterface {
 
 	/**
+	 * File system abstraction for read/write and HTTP fetch operations.
+	 *
 	 * @var FileSystemInterface
 	 */
 	private $wp_filesystem;
 
 	/**
+	 * HTML parser for DOM document manipulation.
+	 *
 	 * @var HtmlParserInterface
 	 */
 	private $dom_document_parser;
@@ -149,7 +153,7 @@ class LinksFinder implements LinksFinderInterface {
 	 * Normalize a URL for consistent storage and deduplication.
 	 *
 	 * Strips fragments, lowercases scheme and host, and applies a consistent
-	 * trailing-slash policy via WordPress's trailingslashit().
+	 * trailing-slash policy via trailingslashit().
 	 *
 	 * @param string $url Absolute URL.
 	 *
@@ -227,7 +231,7 @@ class LinksFinder implements LinksFinderInterface {
 			return new \WP_Error( 'scan_page_error', \esc_html__( 'An error occurred while scanning the page. Please check home page template.', 'seo-links-crawler' ) );
 		}
 
-		$this->dom_document_parser->loadHTMLDocument( $file_content );
+		$this->dom_document_parser->load_html_document( $file_content );
 
 		$links = $this->dom_document_parser->gather_links();
 		if ( empty( $links ) ) {

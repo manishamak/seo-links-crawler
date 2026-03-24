@@ -13,20 +13,29 @@ defined( 'ABSPATH' ) || exit;
 class AdminPage {
 
 	/**
+	 * Lock manager instance.
+	 *
 	 * @var CrawlLock
 	 */
 	private $lock;
 
 	/**
+	 * Crawl metadata provider.
+	 *
 	 * @var CrawlMeta
 	 */
 	private $meta;
+
 	/**
+	 * Registered admin page hook suffix.
+	 *
 	 * @var string
 	 */
 	private $page_hook_suffix;
 
 	/**
+	 * Constructor.
+	 *
 	 * @param CrawlLock $lock Lock manager.
 	 * @param CrawlMeta $meta Metadata provider.
 	 */
@@ -39,14 +48,14 @@ class AdminPage {
 	 * Register WordPress hooks for the admin UI.
 	 */
 	public function register_hooks() {
-		add_action( 'admin_menu', [ $this, 'slc_register_page' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'slc_admin_assets' ] );
+		add_action( 'admin_menu', [ $this, 'register_plugin_page' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'include_admin_assets' ] );
 	}
 
 	/**
 	 * Add settings page in admin dashboard.
 	 */
-	public function slc_register_page() {
+	public function register_plugin_page() {
 		$this->page_hook_suffix = add_menu_page(
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
 			__( 'SEO Links Crawler', 'seo-links-crawler' ),
@@ -66,7 +75,7 @@ class AdminPage {
 		?>
 		<div class="slc-wrap">
 			<h1 class="wp-heading-inline"><?php echo esc_html__( 'SEO Links Crawler', 'seo-links-crawler' ); ?></h1>
-			<a href="#" class="slc-button-action<?php echo $is_locked ? ' disabled' : ''; ?>"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></a>
+			<button type="button" class="slc-button-action<?php echo $is_locked ? ' disabled' : ''; ?>"><?php echo esc_html__( 'Start Crawler', 'seo-links-crawler' ); ?></button>
 			<button type="button" class="slc-button-clear"><?php echo esc_html__( 'Clear Cache', 'seo-links-crawler' ); ?></button>
 
 			<div class="slc-status-bar" aria-live="polite">
@@ -120,8 +129,8 @@ class AdminPage {
 				sprintf(
 					/* translators: 1: relative time, 2: link count */
 					esc_html__( 'Last crawl: %1$s — %2$d links found.', 'seo-links-crawler' ),
-					$time_label,
-					$link_count
+					esc_html( $time_label ),
+					absint( $link_count )
 				)
 			);
 		} else {
@@ -131,7 +140,7 @@ class AdminPage {
 				sprintf(
 					/* translators: %s: relative time */
 					esc_html__( 'Last crawl: %s — failed.', 'seo-links-crawler' ),
-					$time_label
+					esc_html( $time_label )
 				),
 				esc_html( $error )
 			);
@@ -144,8 +153,7 @@ class AdminPage {
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 * @return void
 	 */
-	public function slc_admin_assets($hook_suffix)
-	{
+	public function include_admin_assets( $hook_suffix ) {
 		if ( $this->page_hook_suffix !== $hook_suffix ) {
 			return;
 		}
@@ -169,14 +177,14 @@ class AdminPage {
 			'slc-admin-script',
 			'slcAdminObj',
 			[
-				'ajaxurl' => admin_url('admin-ajax.php'),
-				'nonce' => wp_create_nonce('slc-admin'),
-				'loading' => esc_html__('Loading', 'seo-links-crawler'),
-				'resetBtnText' => esc_html__('Start Crawler', 'seo-links-crawler'),
-				'isLocked' => $this->lock->is_locked(),
-				'lockedMsg' => esc_html__('A crawl is already in progress. Please wait and try again.', 'seo-links-crawler'),
-				'clearing' => esc_html__('Clearing…', 'seo-links-crawler'),
-				'clearBtnText' => esc_html__('Clear Cache', 'seo-links-crawler'),
+				'ajaxurl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'slc-admin' ),
+				'loading'      => esc_html__( 'Loading', 'seo-links-crawler' ),
+				'resetBtnText' => esc_html__( 'Start Crawler', 'seo-links-crawler' ),
+				'isLocked'     => $this->lock->is_locked(),
+				'lockedMsg'    => esc_html__( 'A crawl is already in progress. Please wait and try again.', 'seo-links-crawler' ),
+				'clearing'     => esc_html__( 'Clearing…', 'seo-links-crawler' ),
+				'clearBtnText' => esc_html__( 'Clear Cache', 'seo-links-crawler' ),
 			]
 		);
 	}

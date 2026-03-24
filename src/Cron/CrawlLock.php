@@ -45,5 +45,4 @@ class CrawlLock {
 	public static function is_locked() {
 		return (bool) get_transient( self::TRANSIENT_KEY );
 	}
-
 }

@@ -45,7 +45,7 @@ class Autoloader {
 
 		add_action(
 			'admin_notices',
-			function() use ( $error_msg ) { ?>
+			function () use ( $error_msg ) { ?>
 			<div class="notice notice-error">
 				<p><?php echo wp_kses_post( $error_msg ); ?></p>
 			</div>
