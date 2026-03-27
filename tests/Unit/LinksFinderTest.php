@@ -59,7 +59,7 @@ class LinksFinderTest extends TestCase {
 		$this->assertTrue( $this->finder->should_skip_href( $href ) );
 	}
 
-	public function skippable_hrefs_provider() {
+	public static function skippable_hrefs_provider() {
 		return [
 			'empty string'       => [ '' ],
 			'whitespace only'    => [ '   ' ],
@@ -78,7 +78,7 @@ class LinksFinderTest extends TestCase {
 		$this->assertFalse( $this->finder->should_skip_href( $href ) );
 	}
 
-	public function non_skippable_hrefs_provider() {
+	public static function non_skippable_hrefs_provider() {
 		return [
 			'absolute http'     => [ 'http://example.com/page' ],
 			'absolute https'    => [ 'https://example.com/page' ],
@@ -97,7 +97,7 @@ class LinksFinderTest extends TestCase {
 		$this->assertTrue( $this->finder->is_internal_link( $href ) );
 	}
 
-	public function internal_links_provider() {
+	public static function internal_links_provider() {
 		return [
 			'same host https'          => [ 'https://example.com/about' ],
 			'same host http'           => [ 'http://example.com/contact' ],
@@ -116,7 +116,7 @@ class LinksFinderTest extends TestCase {
 		$this->assertFalse( $this->finder->is_internal_link( $href ) );
 	}
 
-	public function external_links_provider() {
+	public static function external_links_provider() {
 		return [
 			'different host'           => [ 'https://other-site.com/page' ],
 			'protocol relative other'  => [ '//other-site.com/page' ],

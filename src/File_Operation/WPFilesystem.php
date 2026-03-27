@@ -3,6 +3,7 @@
 namespace Slc\SeoLinksCrawler\File_Operation;
 
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 /**
  * WordPress filesystem wrapper for local file and remote URL operations.
@@ -100,7 +101,9 @@ class WPFilesystem implements FileSystemInterface {
 	 * @return string|false Response body on success, false on failure.
 	 */
 	public function fetch_url( $url ) {
-		$response = wp_remote_get( $url, [ 'timeout' => 30 ] );
+		// VIP Go discourages long timeouts; keep it tight for request safety.
+		$timeout  = VipCompat::is_vip() ? 2 : 30;
+		$response = VipCompat::safe_wp_remote_get( $url, [ 'timeout' => $timeout ] );
 
 		if ( is_wp_error( $response ) ) {
 			return false;

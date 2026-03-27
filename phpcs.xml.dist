@@ -16,6 +16,9 @@
 	<config name="testVersion" value="8.3-"/>
 	<config name="minimum_supported_wp_version" value="5.0"/>
 
+	<!-- VIP Go compatibility rules (errors/warnings only). -->
+	<rule ref="WordPress-VIP-Go"/>
+
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log" />

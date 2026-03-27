@@ -39,3 +39,4 @@ if ( is_dir( $storage_directory ) ) {
 wp_clear_scheduled_hook( 'slc_crawl_internal_links_scheduler' );
 delete_option( 'slc_last_crawl' );
 delete_transient( 'slc_crawl_lock' );
+delete_transient( 'slc_cached_home_connected_links' );

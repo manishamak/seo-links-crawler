@@ -6,6 +6,7 @@ use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 use Slc\SeoLinksCrawler\Storage\StorageManager;
+use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -130,7 +131,7 @@ class CrawlOrchestrator {
 
 			if ( ! empty( $file_errors ) ) {
 				$file_error = implode( ' ', $file_errors );
-				\error_log( 'SEO Links Crawler: file creation failed - ' . $file_error );
+				VipCompat::log_error( 'SEO Links Crawler: file creation failed - ' . $file_error );
 			}
 
 			\do_action( 'slc_after_links_crawling_action', $links_result );
@@ -141,7 +142,7 @@ class CrawlOrchestrator {
 			];
 
 		} catch ( \Exception $e ) {
-			\error_log( 'SEO Links Crawler: crawl failed - ' . $e->getMessage() );
+			VipCompat::log_error( 'SEO Links Crawler: crawl failed - ' . $e->getMessage() );
 			return new \WP_Error( 'crawl_error', $e->getMessage() );
 		}
 	}

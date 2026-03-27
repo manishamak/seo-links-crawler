@@ -9,7 +9,9 @@ use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
 use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
 use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
 use Slc\SeoLinksCrawler\Cache\FilesystemCache;
+use Slc\SeoLinksCrawler\Cache\TransientCache;
 use Slc\SeoLinksCrawler\LinksFinder;
+use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 /**
  * Plugin-specific container with interface → implementation bindings.
@@ -36,7 +38,10 @@ class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 	protected function register_bindings() {
 		$this->bind( FileSystemInterface::class, WPFilesystem::class, true );
 		$this->bind( HtmlParserInterface::class, DomDocumentParser::class, true );
-		$this->bind( CacheInterface::class, FilesystemCache::class );
+		$this->bind(
+			CacheInterface::class,
+			VipCompat::is_vip() ? TransientCache::class : FilesystemCache::class
+		);
 		$this->bind( LinksFinderInterface::class, LinksFinder::class );
 	}
 }
