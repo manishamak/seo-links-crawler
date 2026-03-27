@@ -1,3 +1,4 @@
 /vendor/*
 /Tests/env/local/
 .editorconfig
+.phpunit.result.cache
