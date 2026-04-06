@@ -3,13 +3,13 @@
 namespace Slc\SeoLinksCrawler\Tests\Unit;
 
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
 use Slc\SeoLinksCrawler\LinksFinder;
 
-/**
- * @covers \Slc\SeoLinksCrawler\LinksFinder
- */
+#[CoversClass( LinksFinder::class )]
 class LinksFinderTest extends TestCase {
 
 	/**
@@ -34,27 +34,18 @@ class LinksFinderTest extends TestCase {
 		$this->parser     = \Mockery::mock( HtmlParserInterface::class );
 		$this->finder     = new LinksFinder( $this->filesystem, $this->parser );
 
-		Functions\stubs( [
-			'home_url'          => 'https://example.com',
-			'wp_parse_url'      => function ( $url, $component = -1 ) {
-				return ( -1 === $component )
-					? parse_url( $url )
-					: parse_url( $url, $component );
-			},
-			'trailingslashit'   => function ( $str ) {
-				return rtrim( $str, '/' ) . '/';
-			},
-			'esc_html__'        => function ( $text ) {
-				return $text;
-			},
-		] );
+		Functions\stubs(
+			[
+				'home_url' => 'https://example.com',
+			]
+		);
 	}
 
 	// ------------------------------------------------------------------
 	// should_skip_href
 	// ------------------------------------------------------------------
 
-	/** @dataProvider skippable_hrefs_provider */
+	#[DataProvider( 'skippable_hrefs_provider' )]
 	public function test_should_skip_href_returns_true( $href ) {
 		$this->assertTrue( $this->finder->should_skip_href( $href ) );
 	}
@@ -73,7 +64,7 @@ class LinksFinderTest extends TestCase {
 		];
 	}
 
-	/** @dataProvider non_skippable_hrefs_provider */
+	#[DataProvider( 'non_skippable_hrefs_provider' )]
 	public function test_should_skip_href_returns_false( $href ) {
 		$this->assertFalse( $this->finder->should_skip_href( $href ) );
 	}
@@ -92,36 +83,36 @@ class LinksFinderTest extends TestCase {
 	// is_internal_link
 	// ------------------------------------------------------------------
 
-	/** @dataProvider internal_links_provider */
+	#[DataProvider( 'internal_links_provider' )]
 	public function test_is_internal_link_returns_true( $href ) {
 		$this->assertTrue( $this->finder->is_internal_link( $href ) );
 	}
 
 	public static function internal_links_provider() {
 		return [
-			'same host https'          => [ 'https://example.com/about' ],
-			'same host http'           => [ 'http://example.com/contact' ],
-			'same host uppercase'      => [ 'https://EXAMPLE.COM/page' ],
-			'root relative'            => [ '/about' ],
-			'plain relative'           => [ 'about/team' ],
-			'protocol relative same'   => [ '//example.com/page' ],
-			'home url itself'          => [ 'https://example.com/' ],
-			'trailing slash'           => [ 'https://example.com/about/' ],
-			'with query string'        => [ 'https://example.com/search?q=test' ],
+			'same host https'        => [ 'https://example.com/about' ],
+			'same host http'         => [ 'http://example.com/contact' ],
+			'same host uppercase'    => [ 'https://EXAMPLE.COM/page' ],
+			'root relative'          => [ '/about' ],
+			'plain relative'         => [ 'about/team' ],
+			'protocol relative same' => [ '//example.com/page' ],
+			'home url itself'        => [ 'https://example.com/' ],
+			'trailing slash'         => [ 'https://example.com/about/' ],
+			'with query string'      => [ 'https://example.com/search?q=test' ],
 		];
 	}
 
-	/** @dataProvider external_links_provider */
+	#[DataProvider( 'external_links_provider' )]
 	public function test_is_internal_link_returns_false( $href ) {
 		$this->assertFalse( $this->finder->is_internal_link( $href ) );
 	}
 
 	public static function external_links_provider() {
 		return [
-			'different host'           => [ 'https://other-site.com/page' ],
-			'protocol relative other'  => [ '//other-site.com/page' ],
-			'ftp scheme'               => [ 'ftp://example.com/file' ],
-			'malformed url'            => [ 'http:///bad' ],
+			'different host'          => [ 'https://other-site.com/page' ],
+			'protocol relative other' => [ '//other-site.com/page' ],
+			'ftp scheme'              => [ 'ftp://example.com/file' ],
+			'malformed url'           => [ 'http:///bad' ],
 		];
 	}
 
@@ -130,9 +121,11 @@ class LinksFinderTest extends TestCase {
 	// ------------------------------------------------------------------
 
 	public function test_is_internal_link_with_subdirectory_install() {
-		Functions\stubs( [
-			'home_url' => 'https://example.com/blog',
-		] );
+		Functions\stubs(
+			[
+				'home_url' => 'https://example.com/blog',
+			]
+		);
 
 		$this->assertTrue( $this->finder->is_internal_link( 'https://example.com/blog/post-1' ) );
 		$this->assertTrue( $this->finder->is_internal_link( 'https://example.com/blog/' ) );
@@ -166,16 +159,39 @@ class LinksFinderTest extends TestCase {
 	}
 
 	// ------------------------------------------------------------------
+	// is_relative_url
+	// ------------------------------------------------------------------
+
+	public function test_is_relative_url_returns_true_for_relative_path() {
+		$this->assertTrue( $this->finder->is_relative_url( '/about' ) );
+		$this->assertTrue( $this->finder->is_relative_url( 'contact' ) );
+	}
+
+	public function test_is_relative_url_returns_false_for_absolute_url() {
+		$this->assertFalse( $this->finder->is_relative_url( 'https://example.com/page' ) );
+		$this->assertFalse( $this->finder->is_relative_url( 'http://example.com/page' ) );
+		$this->assertFalse( $this->finder->is_relative_url( '//example.com/page' ) );
+	}
+
+	// ------------------------------------------------------------------
+	// create_absolute_url
+	// ------------------------------------------------------------------
+
+	public function test_create_absolute_url_converts_relative_path() {
+		$result = $this->finder->create_absolute_url( '/about' );
+		$this->assertSame( 'https://example.com/about', $result );
+	}
+
+	public function test_create_absolute_url_returns_base_when_null() {
+		$result = $this->finder->create_absolute_url( null );
+		$this->assertSame( 'https://example.com/', $result );
+	}
+
+	// ------------------------------------------------------------------
 	// create_internal_links (integration of all filtering)
 	// ------------------------------------------------------------------
 
 	public function test_create_internal_links_filters_and_deduplicates() {
-		Functions\stubs( [
-			'apply_filters' => function ( $tag, $value ) {
-				return $value;
-			},
-		] );
-
 		$html = '<html><body><a href="/about">A</a></body></html>';
 
 		$this->filesystem
@@ -190,16 +206,18 @@ class LinksFinderTest extends TestCase {
 		$this->parser
 			->shouldReceive( 'gather_links' )
 			->once()
-			->andReturn( [
-				'https://example.com/about',
-				'https://example.com/about#section',
-				'https://example.com/contact',
-				'https://other.com/page',
-				'mailto:test@example.com',
-				'#fragment',
-				'',
-				'/relative-page',
-			] );
+			->andReturn(
+				[
+					'https://example.com/about',
+					'https://example.com/about#section',
+					'https://example.com/contact',
+					'https://other.com/page',
+					'mailto:test@example.com',
+					'#fragment',
+					'',
+					'/relative-page',
+				]
+			);
 
 		$result = $this->finder->create_internal_links( 'https://example.com', $html );
 
@@ -215,12 +233,6 @@ class LinksFinderTest extends TestCase {
 	}
 
 	public function test_create_internal_links_fetches_url_when_no_content() {
-		Functions\stubs( [
-			'apply_filters' => function ( $tag, $value ) {
-				return $value;
-			},
-		] );
-
 		$html = '<html><body><a href="/page">Link</a></body></html>';
 
 		$this->filesystem
@@ -251,6 +263,24 @@ class LinksFinderTest extends TestCase {
 			->andReturn( false );
 
 		$result = $this->finder->create_internal_links( 'https://example.com' );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+	}
+
+	public function test_create_internal_links_returns_wp_error_when_no_links_found() {
+		$html = '<html><body><p>No links</p></body></html>';
+
+		$this->parser
+			->shouldReceive( 'load_html_document' )
+			->once()
+			->with( $html );
+
+		$this->parser
+			->shouldReceive( 'gather_links' )
+			->once()
+			->andReturn( [] );
+
+		$result = $this->finder->create_internal_links( 'https://example.com', $html );
 
 		$this->assertInstanceOf( \WP_Error::class, $result );
 	}
