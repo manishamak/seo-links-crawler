@@ -8,11 +8,11 @@ use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\Cron\CrawlLock;
 use Slc\SeoLinksCrawler\Cron\CrawlMeta;
 use Slc\SeoLinksCrawler\Cron\CrawlOrchestrator;
 use Slc\SeoLinksCrawler\Cron\CrawlScheduler;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
 
 #[CoversClass( CrawlScheduler::class )]
 class CrawlSchedulerTest extends TestCase {
@@ -33,7 +33,7 @@ class CrawlSchedulerTest extends TestCase {
 		$this->meta         = Mockery::mock( CrawlMeta::class );
 		$this->cache        = Mockery::mock( CacheInterface::class );
 		$this->filesystem   = Mockery::mock( FileSystemInterface::class );
-		$this->storage      = Mockery::mock( StorageManager::class );
+		$this->storage      = Mockery::mock( StorageInterface::class );
 
 		$this->scheduler = new CrawlScheduler(
 			$this->orchestrator,
@@ -69,9 +69,7 @@ class CrawlSchedulerTest extends TestCase {
 		$this->meta->shouldReceive( 'record_finished' )->once()->with( $crawl_result );
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( false );
 		$this->cache->shouldReceive( 'clean_up_cache' )->once();
-		$this->storage->shouldReceive( 'get_home_html_path' )->once()->andReturn( '/path/home.html' );
-		$this->storage->shouldReceive( 'get_sitemap_path' )->once()->andReturn( '/path/sitemap.html' );
-		$this->filesystem->shouldReceive( 'delete_file' )->twice();
+		$this->storage->shouldReceive( 'clear_artifacts' )->once();
 		$this->orchestrator->shouldReceive( 'crawl' )->once()->andReturn( $crawl_result );
 
 		$result = $this->scheduler->execute();
@@ -90,9 +88,7 @@ class CrawlSchedulerTest extends TestCase {
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( $previous_cache );
 		$this->cache->shouldReceive( 'clean_up_cache' )->once();
 		$this->cache->shouldReceive( 'cache_data' )->once()->with( $previous_cache );
-		$this->storage->shouldReceive( 'get_home_html_path' )->andReturn( '/path/home.html' );
-		$this->storage->shouldReceive( 'get_sitemap_path' )->andReturn( '/path/sitemap.html' );
-		$this->filesystem->shouldReceive( 'delete_file' )->twice();
+		$this->storage->shouldReceive( 'clear_artifacts' )->once();
 		$this->orchestrator->shouldReceive( 'crawl' )->once()->andReturn( $wp_error );
 
 		$result = $this->scheduler->execute();
@@ -106,9 +102,7 @@ class CrawlSchedulerTest extends TestCase {
 		$this->meta->shouldReceive( 'update' )->twice();
 		$this->cache->shouldReceive( 'get_cache_data' )->andReturn( false );
 		$this->cache->shouldReceive( 'clean_up_cache' )->once();
-		$this->storage->shouldReceive( 'get_home_html_path' )->andReturn( '/path/home.html' );
-		$this->storage->shouldReceive( 'get_sitemap_path' )->andReturn( '/path/sitemap.html' );
-		$this->filesystem->shouldReceive( 'delete_file' )->twice();
+		$this->storage->shouldReceive( 'clear_artifacts' )->once();
 
 		$this->orchestrator
 			->shouldReceive( 'crawl' )

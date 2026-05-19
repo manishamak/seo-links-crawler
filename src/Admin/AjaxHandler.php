@@ -4,10 +4,10 @@ namespace Slc\SeoLinksCrawler\Admin;
 
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\Cron\CrawlLock;
 use Slc\SeoLinksCrawler\Cron\CrawlMeta;
 use Slc\SeoLinksCrawler\Cron\CrawlOrchestrator;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,7 +54,7 @@ class AjaxHandler {
 	/**
 	 * Storage manager for generated artifacts.
 	 *
-	 * @var StorageManager
+	 * @var StorageInterface
 	 */
 	private $storage;
 
@@ -66,7 +66,7 @@ class AjaxHandler {
 	 * @param CrawlMeta           $meta         Metadata tracker.
 	 * @param CacheInterface      $cache        Cache instance.
 	 * @param FileSystemInterface $filesystem  File system instance.
-	 * @param StorageManager      $storage      Storage manager.
+	 * @param StorageInterface    $storage      Storage manager.
 	 */
 	public function __construct(
 		CrawlOrchestrator $orchestrator,
@@ -74,7 +74,7 @@ class AjaxHandler {
 		CrawlMeta $meta,
 		CacheInterface $cache,
 		FileSystemInterface $filesystem,
-		StorageManager $storage
+		StorageInterface $storage
 	) {
 		$this->orchestrator = $orchestrator;
 		$this->lock         = $lock;
@@ -180,8 +180,7 @@ class AjaxHandler {
 		}
 
 		$this->cache->clean_up_cache();
-		$this->filesystem->delete_file( $this->storage->get_home_html_path() );
-		$this->filesystem->delete_file( $this->storage->get_sitemap_path() );
+		$this->storage->clear_artifacts();
 
 		wp_send_json_success(
 			[

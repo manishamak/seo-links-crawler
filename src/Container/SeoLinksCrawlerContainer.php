@@ -6,11 +6,14 @@ use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
 use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
 use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
 use Slc\SeoLinksCrawler\Cache\FilesystemCache;
 use Slc\SeoLinksCrawler\Cache\TransientCache;
 use Slc\SeoLinksCrawler\LinksFinder;
+use Slc\SeoLinksCrawler\Storage\StorageManager;
+use Slc\SeoLinksCrawler\Storage\VipStorageManager;
 use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 /**
@@ -43,5 +46,9 @@ class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 			VipCompat::is_vip() ? TransientCache::class : FilesystemCache::class
 		);
 		$this->bind( LinksFinderInterface::class, LinksFinder::class );
+		$this->bind(
+			StorageInterface::class,
+			VipCompat::is_vip() ? VipStorageManager::class : StorageManager::class
+		);
 	}
 }

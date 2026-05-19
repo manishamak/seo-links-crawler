@@ -30,6 +30,9 @@ if ( ! defined( 'FS_CHMOD_FILE' ) ) {
 if ( ! defined( 'WP_DEBUG' ) ) {
 	define( 'WP_DEBUG', false );
 }
+if ( ! defined( 'OBJECT' ) ) {
+	define( 'OBJECT', 'OBJECT' );
+}
 
 require_once $autoloader;
 

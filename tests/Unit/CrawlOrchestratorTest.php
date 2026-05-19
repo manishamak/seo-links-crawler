@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\Cron\CrawlOrchestrator;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
 
 #[CoversClass( CrawlOrchestrator::class )]
 class CrawlOrchestratorTest extends TestCase {
@@ -26,7 +26,7 @@ class CrawlOrchestratorTest extends TestCase {
 		$this->filesystem   = Mockery::mock( FileSystemInterface::class );
 		$this->links_finder = Mockery::mock( LinksFinderInterface::class );
 		$this->cache        = Mockery::mock( CacheInterface::class );
-		$this->storage      = Mockery::mock( StorageManager::class );
+		$this->storage      = Mockery::mock( StorageInterface::class );
 
 		$this->orchestrator = new CrawlOrchestrator(
 			$this->filesystem,
@@ -43,12 +43,11 @@ class CrawlOrchestratorTest extends TestCase {
 
 		$this->cache->shouldReceive( 'initiate_cache' )->once();
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( $cached );
-		$this->storage->shouldReceive( 'ensure_directory' )->once();
-		$this->storage->shouldReceive( 'get_directory' )->andReturn( '/uploads/slc' );
-		$this->storage->shouldReceive( 'get_home_html_path' )->andReturn( '/uploads/slc/home.html' );
-		$this->storage->shouldReceive( 'save_sitemap_html' )->once()->with( $cached )->andReturn( true );
+		$this->storage->shouldReceive( 'prepare' )->once()->andReturn( true );
+		$this->storage->shouldReceive( 'get_location_label' )->andReturn( '/uploads/slc' );
+		$this->storage->shouldReceive( 'home_snapshot_exists' )->andReturn( true );
+		$this->storage->shouldReceive( 'save_sitemap' )->once()->with( $cached )->andReturn( true );
 
-		$this->filesystem->shouldReceive( 'file_exists' )->with( '/uploads/slc/home.html' )->andReturn( true );
 		$this->filesystem->shouldReceive( 'fetch_url' )->never();
 		$this->links_finder->shouldReceive( 'create_internal_links' )->never();
 
@@ -65,18 +64,17 @@ class CrawlOrchestratorTest extends TestCase {
 		$this->cache->shouldReceive( 'initiate_cache' )->once();
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( false );
 		$this->cache->shouldReceive( 'cache_data' )->once()->with( $links )->andReturn( true );
-		$this->storage->shouldReceive( 'ensure_directory' )->once();
-		$this->storage->shouldReceive( 'get_directory' )->andReturn( '/uploads/slc' );
-		$this->storage->shouldReceive( 'get_home_html_path' )->andReturn( '/uploads/slc/home.html' );
-		$this->storage->shouldReceive( 'save_home_html' )->andReturn( true );
-		$this->storage->shouldReceive( 'save_sitemap_html' )->with( $links )->andReturn( true );
+		$this->storage->shouldReceive( 'prepare' )->once()->andReturn( true );
+		$this->storage->shouldReceive( 'get_location_label' )->andReturn( '/uploads/slc' );
+		$this->storage->shouldReceive( 'home_snapshot_exists' )->andReturn( false );
+		$this->storage->shouldReceive( 'save_home_snapshot' )->andReturn( true );
+		$this->storage->shouldReceive( 'save_sitemap' )->with( $links )->andReturn( true );
 
 		$this->filesystem
 			->shouldReceive( 'fetch_url' )
 			->once()
 			->with( 'https://example.com' )
 			->andReturn( '<html><body>Home</body></html>' );
-		$this->filesystem->shouldReceive( 'file_exists' )->andReturn( false );
 
 		$this->links_finder
 			->shouldReceive( 'create_internal_links' )
@@ -94,8 +92,8 @@ class CrawlOrchestratorTest extends TestCase {
 
 		$this->cache->shouldReceive( 'initiate_cache' )->once();
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( false );
-		$this->storage->shouldReceive( 'ensure_directory' )->once();
-		$this->storage->shouldReceive( 'get_directory' )->andReturn( '/uploads/slc' );
+		$this->storage->shouldReceive( 'prepare' )->once()->andReturn( true );
+		$this->storage->shouldReceive( 'get_location_label' )->andReturn( '/uploads/slc' );
 
 		$this->filesystem->shouldReceive( 'fetch_url' )->once()->andReturn( '<html></html>' );
 		$this->links_finder->shouldReceive( 'create_internal_links' )->once()->andReturn( $wp_error );
@@ -109,8 +107,8 @@ class CrawlOrchestratorTest extends TestCase {
 	public function test_crawl_returns_wp_error_when_no_links_found(): void {
 		$this->cache->shouldReceive( 'initiate_cache' )->once();
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( false );
-		$this->storage->shouldReceive( 'ensure_directory' )->once();
-		$this->storage->shouldReceive( 'get_directory' )->andReturn( '/uploads/slc' );
+		$this->storage->shouldReceive( 'prepare' )->once()->andReturn( true );
+		$this->storage->shouldReceive( 'get_location_label' )->andReturn( '/uploads/slc' );
 
 		$this->filesystem->shouldReceive( 'fetch_url' )->once()->andReturn( '<html></html>' );
 		$this->links_finder->shouldReceive( 'create_internal_links' )->once()->andReturn( [] );
@@ -126,14 +124,13 @@ class CrawlOrchestratorTest extends TestCase {
 		$this->cache->shouldReceive( 'initiate_cache' )->once();
 		$this->cache->shouldReceive( 'get_cache_data' )->once()->andReturn( false );
 		$this->cache->shouldReceive( 'cache_data' )->once()->andReturn( false );
-		$this->storage->shouldReceive( 'ensure_directory' )->once();
-		$this->storage->shouldReceive( 'get_directory' )->andReturn( '/uploads/slc' );
-		$this->storage->shouldReceive( 'get_home_html_path' )->andReturn( '/uploads/slc/home.html' );
-		$this->storage->shouldReceive( 'save_home_html' )->andReturn( false );
-		$this->storage->shouldReceive( 'save_sitemap_html' )->andReturn( false );
+		$this->storage->shouldReceive( 'prepare' )->once()->andReturn( true );
+		$this->storage->shouldReceive( 'get_location_label' )->andReturn( '/uploads/slc' );
+		$this->storage->shouldReceive( 'home_snapshot_exists' )->andReturn( false );
+		$this->storage->shouldReceive( 'save_home_snapshot' )->andReturn( false );
+		$this->storage->shouldReceive( 'save_sitemap' )->andReturn( false );
 
 		$this->filesystem->shouldReceive( 'fetch_url' )->once()->andReturn( '<html></html>' );
-		$this->filesystem->shouldReceive( 'file_exists' )->andReturn( false );
 		$this->links_finder->shouldReceive( 'create_internal_links' )->once()->andReturn( $links );
 
 		$result = $this->orchestrator->crawl();

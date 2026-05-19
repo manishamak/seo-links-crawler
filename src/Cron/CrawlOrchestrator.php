@@ -5,7 +5,7 @@ namespace Slc\SeoLinksCrawler\Cron;
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 defined( 'ABSPATH' ) || exit;
@@ -43,7 +43,7 @@ class CrawlOrchestrator {
 	/**
 	 * Manager for generated storage artifacts.
 	 *
-	 * @var StorageManager
+	 * @var StorageInterface
 	 */
 	private $storage;
 
@@ -53,13 +53,13 @@ class CrawlOrchestrator {
 	 * @param FileSystemInterface  $filesystem   File system instance.
 	 * @param LinksFinderInterface $links_finder  Links finder instance.
 	 * @param CacheInterface       $cache         Cache instance.
-	 * @param StorageManager       $storage       Storage manager instance.
+	 * @param StorageInterface     $storage       Storage manager instance.
 	 */
 	public function __construct(
 		FileSystemInterface $filesystem,
 		LinksFinderInterface $links_finder,
 		CacheInterface $cache,
-		StorageManager $storage
+		StorageInterface $storage
 	) {
 		$this->filesystem   = $filesystem;
 		$this->links_finder = $links_finder;
@@ -87,12 +87,12 @@ class CrawlOrchestrator {
 
 		try {
 			$this->cache->initiate_cache();
-			$this->storage->ensure_directory();
+			$this->storage->prepare();
 
 			$home_url          = \get_home_url();
 			$home_content      = null;
 			$file_errors       = [];
-			$storage_directory = $this->storage->get_directory();
+			$storage_directory = $this->storage->get_location_label();
 
 			$links_result = $this->cache->get_cache_data();
 
@@ -115,15 +115,15 @@ class CrawlOrchestrator {
 				}
 			}
 
-			if ( ! $this->filesystem->file_exists( $this->storage->get_home_html_path() ) ) {
-				$is_home_created = $this->storage->save_home_html( $home_content );
+			if ( ! $this->storage->home_snapshot_exists() ) {
+				$is_home_created = $this->storage->save_home_snapshot( $home_content );
 				if ( ! $is_home_created ) {
 					/* translators: 1: storage directory path */
 					$file_errors[] = sprintf( \esc_html__( 'There is some error in creating home.html. Please check whether %1$s exists and is writable.', 'seo-links-crawler' ), $storage_directory );
 				}
 			}
 
-			$is_sitemap_created = $this->storage->save_sitemap_html( $links_result );
+			$is_sitemap_created = $this->storage->save_sitemap( $links_result );
 			if ( ! $is_sitemap_created ) {
 				/* translators: 1: storage directory path */
 				$file_errors[] = sprintf( \esc_html__( 'There is some error in creating sitemap.html. Please check whether %1$s exists and is writable.', 'seo-links-crawler' ), $storage_directory );

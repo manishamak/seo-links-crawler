@@ -4,7 +4,7 @@ namespace Slc\SeoLinksCrawler\Cron;
 
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,7 +54,7 @@ class CrawlScheduler {
 	/**
 	 * Storage manager for generated files.
 	 *
-	 * @var StorageManager
+	 * @var StorageInterface
 	 */
 	private $storage;
 
@@ -66,7 +66,7 @@ class CrawlScheduler {
 	 * @param CrawlMeta           $meta         Metadata tracker.
 	 * @param CacheInterface      $cache        Cache instance.
 	 * @param FileSystemInterface $filesystem  File system instance.
-	 * @param StorageManager      $storage      Storage manager.
+	 * @param StorageInterface    $storage      Storage manager.
 	 */
 	public function __construct(
 		CrawlOrchestrator $orchestrator,
@@ -74,7 +74,7 @@ class CrawlScheduler {
 		CrawlMeta $meta,
 		CacheInterface $cache,
 		FileSystemInterface $filesystem,
-		StorageManager $storage
+		StorageInterface $storage
 	) {
 		$this->orchestrator = $orchestrator;
 		$this->lock         = $lock;
@@ -116,14 +116,7 @@ class CrawlScheduler {
 			$previous_cache = $this->cache->get_cache_data();
 			$this->cache->clean_up_cache();
 
-			$stale_files = [
-				$this->storage->get_home_html_path(),
-				$this->storage->get_sitemap_path(),
-			];
-
-			foreach ( $stale_files as $file ) {
-				$this->filesystem->delete_file( $file );
-			}
+			$this->storage->clear_artifacts();
 
 			$result = $this->orchestrator->crawl();
 

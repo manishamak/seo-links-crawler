@@ -40,7 +40,7 @@ if ( ! defined( 'SLC_PLUGIN_URL' ) ) {
 }
 
 if ( ! defined( 'SLC_VERSION' ) ) {
-	define( 'SLC_VERSION', '1.0.0' );
+	define( 'SLC_VERSION', '1.1.0' );
 }
 
 require SLC_PLUGIN_PATH . '/src/Autoloader.php';
@@ -60,6 +60,9 @@ function slc_init_plugin() {
 
 	$container->get( \Slc\SeoLinksCrawler\Cron\CrawlScheduler::class )->register_hooks();
 	$container->get( \Slc\SeoLinksCrawler\Admin\AjaxHandler::class )->register_hooks();
+	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
+		$container->get( \Slc\SeoLinksCrawler\Public\PublicArtifactsController::class )->register_hooks();
+	}
 
 	if ( is_admin() ) {
 		$container->get( \Slc\SeoLinksCrawler\Admin\AdminPage::class )->register_hooks();
@@ -73,6 +76,15 @@ add_action( 'plugins_loaded', 'slc_init_plugin' );
  * Plugin activation: ensure runtime storage directory exists and schedule cron.
  */
 function slc_activate_plugin() {
+	// On VIP Go the local filesystem is not reliable for runtime artifacts.
+	// Storage is handled via TransientCache and VipStorageManager.
+	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
+		\Slc\SeoLinksCrawler\Public\PublicArtifactsController::add_rewrite_rules();
+		flush_rewrite_rules();
+		\Slc\SeoLinksCrawler\Cron\CrawlScheduler::schedule();
+		return;
+	}
+
 	$uploads           = wp_upload_dir();
 	$storage_directory = trailingslashit( $uploads['basedir'] ) . 'seo-links-crawler';
 	if ( ! is_dir( $storage_directory ) ) {

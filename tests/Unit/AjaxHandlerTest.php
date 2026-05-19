@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Slc\SeoLinksCrawler\Admin\AjaxHandler;
 use Slc\SeoLinksCrawler\Contracts\CacheInterface;
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\Cron\CrawlLock;
 use Slc\SeoLinksCrawler\Cron\CrawlMeta;
 use Slc\SeoLinksCrawler\Cron\CrawlOrchestrator;
-use Slc\SeoLinksCrawler\Storage\StorageManager;
 
 #[CoversClass( AjaxHandler::class )]
 class AjaxHandlerTest extends TestCase {
@@ -33,7 +33,7 @@ class AjaxHandlerTest extends TestCase {
 		$this->meta         = Mockery::mock( CrawlMeta::class );
 		$this->cache        = Mockery::mock( CacheInterface::class );
 		$this->filesystem   = Mockery::mock( FileSystemInterface::class );
-		$this->storage      = Mockery::mock( StorageManager::class );
+		$this->storage      = Mockery::mock( StorageInterface::class );
 
 		$this->handler = new AjaxHandler(
 			$this->orchestrator,
@@ -161,9 +161,7 @@ class AjaxHandlerTest extends TestCase {
 		Functions\when( 'current_user_can' )->justReturn( true );
 
 		$this->cache->shouldReceive( 'clean_up_cache' )->once();
-		$this->storage->shouldReceive( 'get_home_html_path' )->once()->andReturn( '/path/home.html' );
-		$this->storage->shouldReceive( 'get_sitemap_path' )->once()->andReturn( '/path/sitemap.html' );
-		$this->filesystem->shouldReceive( 'delete_file' )->twice();
+		$this->storage->shouldReceive( 'clear_artifacts' )->once();
 
 		try {
 			$this->handler->handle_clear_cache();

@@ -3,13 +3,14 @@
 namespace Slc\SeoLinksCrawler\Storage;
 
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Manages the uploads-backed storage directory and generated HTML files.
  */
-class StorageManager {
+class StorageManager implements StorageInterface {
 
 	const DIRECTORY_NAME     = 'seo-links-crawler';
 	const SITEMAP_FILENAME   = 'sitemap.html';
@@ -125,5 +126,52 @@ class StorageManager {
 		$sitemap_html = ob_get_clean();
 
 		return $this->filesystem->put_file_content( $path, $sitemap_html );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_location_label() {
+		return $this->get_directory();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function prepare() {
+		return $this->ensure_directory();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function home_snapshot_exists() {
+		return (bool) $this->filesystem->file_exists( $this->get_home_html_path() );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * @param string|null $html Pre-fetched HTML, or null to fetch via the filesystem.
+	 */
+	public function save_home_snapshot( $html = null ) {
+		return $this->save_home_html( $html );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * @param array $links Internal links list.
+	 */
+	public function save_sitemap( array $links ) {
+		return $this->save_sitemap_html( $links );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function clear_artifacts() {
+		$this->filesystem->delete_file( $this->get_home_html_path() );
+		$this->filesystem->delete_file( $this->get_sitemap_path() );
 	}
 }
