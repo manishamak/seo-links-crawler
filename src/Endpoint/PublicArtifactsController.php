@@ -1,6 +1,6 @@
 <?php
 
-namespace Slc\SeoLinksCrawler\Public;
+namespace Slc\SeoLinksCrawler\Endpoint;
 
 use Slc\SeoLinksCrawler\Vip\VipCompat;
 
@@ -150,4 +150,3 @@ class PublicArtifactsController {
 		exit;
 	}
 }
-

@@ -61,7 +61,7 @@ function slc_init_plugin() {
 	$container->get( \Slc\SeoLinksCrawler\Cron\CrawlScheduler::class )->register_hooks();
 	$container->get( \Slc\SeoLinksCrawler\Admin\AjaxHandler::class )->register_hooks();
 	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
-		$container->get( \Slc\SeoLinksCrawler\Public\PublicArtifactsController::class )->register_hooks();
+		$container->get( \Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController::class )->register_hooks();
 	}
 
 	if ( is_admin() ) {
@@ -79,7 +79,8 @@ function slc_activate_plugin() {
 	// On VIP Go the local filesystem is not reliable for runtime artifacts.
 	// Storage is handled via TransientCache and VipStorageManager.
 	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
-		\Slc\SeoLinksCrawler\Public\PublicArtifactsController::add_rewrite_rules();
+		\Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController::add_rewrite_rules();
+		// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.flush_rewrite_rules_flush_rewrite_rules -- One-time flush on plugin activation to register VIP artifact rewrite rules.
 		flush_rewrite_rules();
 		\Slc\SeoLinksCrawler\Cron\CrawlScheduler::schedule();
 		return;

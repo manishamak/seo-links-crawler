@@ -9,7 +9,7 @@ use Mockery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
-use Slc\SeoLinksCrawler\Public\PublicArtifactsController;
+use Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController;
 
 #[CoversClass( PublicArtifactsController::class )]
 class PublicArtifactsControllerTest extends TestCase {

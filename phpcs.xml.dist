@@ -6,6 +6,7 @@
 	<exclude-pattern>/tests/*</exclude-pattern>
 	<exclude-pattern>/vendor/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/assets/*</exclude-pattern>
 
 	<arg value="sp"/>
 	<arg name="colors"/>
@@ -17,24 +18,20 @@
 	<config name="minimum_supported_wp_version" value="5.0"/>
 
 	<!-- VIP Go compatibility rules (errors/warnings only). -->
-	<rule ref="WordPress-VIP-Go"/>
+	<rule ref="WordPress-VIP-Go">
+		<!-- PHP-only plugin: skip VIP JS sniffs (deprecated CSS/JS scanning in PHPCS 4.0). -->
+		<exclude name="WordPressVIPMinimum.JS.DangerouslySetInnerHTML"/>
+		<exclude name="WordPressVIPMinimum.JS.HTMLExecutingFunctions"/>
+		<exclude name="WordPressVIPMinimum.JS.InnerHTML"/>
+		<exclude name="WordPressVIPMinimum.JS.StringConcat"/>
+		<exclude name="WordPressVIPMinimum.JS.StrippingTags"/>
+		<exclude name="WordPressVIPMinimum.JS.Window"/>
+	</rule>
 
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log" />
 	</rule>
-
-	<!-- <rule ref="WordPress.WP.I18n">
-		<properties>
-			<property name="text_domain" type="array" value="seo-links-crawler" />
-		</properties>
-	</rule>
-
-	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
-		<properties>
-			<property name="prefixes" type="array" value="slc,SLC" />
-		</properties>
-	</rule> -->
 
 	<rule ref="WordPress.Files.FileName">
 		<properties>

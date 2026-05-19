@@ -4,7 +4,7 @@ namespace Slc\SeoLinksCrawler\Storage;
 
 use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
 use Slc\SeoLinksCrawler\Contracts\StorageInterface;
-use Slc\SeoLinksCrawler\Public\PublicArtifactsController;
+use Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController;
 use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 defined( 'ABSPATH' ) || exit;
@@ -98,8 +98,6 @@ class VipStorageManager implements StorageInterface {
 		if ( ! $html ) {
 			return false;
 		}
-
-		// $html = $this->sanitize_snapshot_html( $html );
 
 		$ok = $this->upsert_artifact_post(
 			self::HOME_SLUG,
@@ -204,45 +202,4 @@ class VipStorageManager implements StorageInterface {
 			wp_delete_post( (int) $post->ID, true );
 		}
 	}
-
-	/**
-	 * Build a home snapshot without requiring loopback HTTP when possible.
-	 *
-	 * If the front page is a static page, we render its content in a minimal HTML
-	 * shell. Otherwise we fall back to a cookie-less HTTP fetch.
-	 *
-	 * @return string|false
-	 */
-	// private function build_home_snapshot_html() {
-	// 	$show_on_front = get_option( 'show_on_front' );
-	// 	if ( 'page' === $show_on_front ) {
-	// 		$page_id = (int) get_option( 'page_on_front' );
-	// 		if ( $page_id ) {
-	// 			$post = get_post( $page_id );
-	// 			if ( $post && isset( $post->post_content ) ) {
-	// 				$content = apply_filters( 'the_content', $post->post_content );
-	// 				$title   = get_bloginfo( 'name' );
-	// 				return '<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex,nofollow\"><title>' .
-	// 					esc_html( $title ) .
-	// 					'</title></head><body>' . $content . '</body></html>';
-	// 			}
-	// 		}
-	// 	}
-
-	// 	// Fallback: VIP-safe HTTP fetch with no cookies, short timeout already handled by WPFilesystem.
-	// 	return $this->filesystem->fetch_url( \get_home_url() );
-	// }
-
-	 /**
-	 * Sanitize snapshot HTML to reduce risk of serving executable scripts.
-	 *
-	 * @param string $html Raw HTML.
-	 *
-	 * @return string
-	 */
-	// private function sanitize_snapshot_html( string $html ): string {
-	// 	// Strip script tags as a defense-in-depth measure.
-	// 	$html = preg_replace( '#<script\b[^>]*>.*?</script>#is', '', $html );
-	// 	return is_string( $html ) ? $html : '';
-	// }
 }

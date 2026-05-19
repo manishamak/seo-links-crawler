@@ -38,7 +38,7 @@
 	},
 	"scripts": {
 		"test-unit": "phpunit --testsuite unit",
-		"phpcs": "phpcs --basepath=. src templates seo-links-crawler.php",
-		"phpcs:fix": "phpcbf --basepath=. src templates seo-links-crawler.php"
+		"phpcs": "phpcs --standard=phpcs.xml.dist",
+		"phpcs:fix": "phpcbf --standard=phpcs.xml.dist"
 	}
 }
