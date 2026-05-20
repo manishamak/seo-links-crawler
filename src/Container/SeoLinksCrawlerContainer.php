@@ -2,32 +2,53 @@
 
 namespace Slc\SeoLinksCrawler\Container;
 
+use Slc\SeoLinksCrawler\Contracts\CacheInterface;
+use Slc\SeoLinksCrawler\Contracts\FileSystemInterface;
+use Slc\SeoLinksCrawler\Contracts\HtmlParserInterface;
+use Slc\SeoLinksCrawler\Contracts\LinksFinderInterface;
+use Slc\SeoLinksCrawler\Contracts\StorageInterface;
 use Slc\SeoLinksCrawler\File_Operation\WPFilesystem;
 use Slc\SeoLinksCrawler\Html_Parser\DomDocumentParser;
 use Slc\SeoLinksCrawler\Cache\FilesystemCache;
+use Slc\SeoLinksCrawler\Cache\TransientCache;
 use Slc\SeoLinksCrawler\LinksFinder;
-use Slc\SeoLinksCrawler\Cron\Crawler;
+use Slc\SeoLinksCrawler\Storage\StorageManager;
+use Slc\SeoLinksCrawler\Storage\VipStorageManager;
+use Slc\SeoLinksCrawler\Vip\VipCompat;
 
 /**
- * Container class for controlling various dependencies.
+ * Plugin-specific container with interface → implementation bindings.
+ *
+ * Only interface bindings need to be registered. Concrete classes
+ * (StorageManager, CrawlOrchestrator, etc.) are auto-resolved from
+ * their constructor type-hints.
  */
 class SeoLinksCrawlerContainer extends DependencyInjectionContainer {
 
 	/**
-	 * SeoLinksCrawlerContainer constructor.
+	 * Constructor.
 	 */
 	public function __construct() {
-		$this->register_dependencies();
+		$this->register_bindings();
 	}
 
 	/**
-	 * Register various class dependencies.
+	 * Map each contract to its concrete implementation.
+	 *
+	 * WPFilesystem and DomDocumentParser are shared (singletons) because
+	 * they hold stateful resources that should not be duplicated.
 	 */
-	protected function register_dependencies() {
-		$this->register( 'WPFilesystem', WPFilesystem::class );
-		$this->register( 'DomDocumentParser', DomDocumentParser::class );
-		$this->register( 'FilesystemCache', FilesystemCache::class );
-		$this->register( 'LinksFinder', LinksFinder::class );
-		$this->register( 'Crawler', Crawler::class );
+	protected function register_bindings() {
+		$this->bind( FileSystemInterface::class, WPFilesystem::class, true );
+		$this->bind( HtmlParserInterface::class, DomDocumentParser::class, true );
+		$this->bind(
+			CacheInterface::class,
+			VipCompat::is_vip() ? TransientCache::class : FilesystemCache::class
+		);
+		$this->bind( LinksFinderInterface::class, LinksFinder::class );
+		$this->bind(
+			StorageInterface::class,
+			VipCompat::is_vip() ? VipStorageManager::class : StorageManager::class
+		);
 	}
 }

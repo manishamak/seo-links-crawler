@@ -51,22 +51,48 @@ if ( ! \Slc\SeoLinksCrawler\Autoloader::init() ) {
 
 /**
  * Bootstrap the plugin after all plugins are loaded.
+ *
+ * Wires dependencies, registers cron and AJAX hooks on every request,
+ * and registers admin UI hooks only inside the admin context.
  */
 function slc_init_plugin() {
-	$container  = new \Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
-	$admin_page = new \Slc\SeoLinksCrawler\Admin\AdminPage( $container );
-	$admin_page->init();
+	$container = new \Slc\SeoLinksCrawler\Container\SeoLinksCrawlerContainer();
+
+	$container->get( \Slc\SeoLinksCrawler\Cron\CrawlScheduler::class )->register_hooks();
+	$container->get( \Slc\SeoLinksCrawler\Admin\AjaxHandler::class )->register_hooks();
+	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
+		$container->get( \Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController::class )->register_hooks();
+	}
+
+	if ( is_admin() ) {
+		$container->get( \Slc\SeoLinksCrawler\Admin\AdminPage::class )->register_hooks();
+	}
+
+	load_plugin_textdomain( 'seo-links-crawler', false, dirname( plugin_basename( SLC_PLUGIN_FILE ) ) . '/languages' );
 }
 add_action( 'plugins_loaded', 'slc_init_plugin' );
 
 /**
- * Plugin activation: ensure cache directory exists.
+ * Plugin activation: ensure runtime storage directory exists and schedule cron.
  */
 function slc_activate_plugin() {
-	$cache_dir = WP_CONTENT_DIR . '/slc-cache/';
-	if ( ! is_dir( $cache_dir ) ) {
-		wp_mkdir_p( $cache_dir );
+	// On VIP Go the local filesystem is not reliable for runtime artifacts.
+	// Storage is handled via TransientCache and VipStorageManager.
+	if ( \Slc\SeoLinksCrawler\Vip\VipCompat::is_vip() ) {
+		\Slc\SeoLinksCrawler\Endpoint\PublicArtifactsController::add_rewrite_rules();
+		// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.flush_rewrite_rules_flush_rewrite_rules -- One-time flush on plugin activation to register VIP artifact rewrite rules.
+		flush_rewrite_rules();
+		\Slc\SeoLinksCrawler\Cron\CrawlScheduler::schedule();
+		return;
 	}
+
+	$uploads           = wp_upload_dir();
+	$storage_directory = trailingslashit( $uploads['basedir'] ) . 'seo-links-crawler';
+	if ( ! is_dir( $storage_directory ) ) {
+		wp_mkdir_p( $storage_directory );
+	}
+
+	\Slc\SeoLinksCrawler\Cron\CrawlScheduler::schedule();
 }
 register_activation_hook( SLC_PLUGIN_FILE, 'slc_activate_plugin' );
 
@@ -74,6 +100,6 @@ register_activation_hook( SLC_PLUGIN_FILE, 'slc_activate_plugin' );
  * Plugin deactivation: unschedule cron events.
  */
 function slc_deactivate_plugin() {
-	\Slc\SeoLinksCrawler\Cron\Crawler::unschedule_cron();
+	\Slc\SeoLinksCrawler\Cron\CrawlScheduler::unschedule();
 }
 register_deactivation_hook( SLC_PLUGIN_FILE, 'slc_deactivate_plugin' );

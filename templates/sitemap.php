@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-<link rel="stylesheet" type="text/css" href="../assets/css/sitemap.css">
+<style>
+<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php echo $sitemap_css; ?>
+</style>
 </head>
 <body>
 <div class="container">

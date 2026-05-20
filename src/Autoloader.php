@@ -7,6 +7,8 @@ namespace Slc\SeoLinksCrawler;
 
 defined( 'ABSPATH' ) || exit;
 
+use Slc\SeoLinksCrawler\Vip\VipCompat;
+
 /**
  * Autoloader class
  */
@@ -40,12 +42,12 @@ class Autoloader {
 	protected static function missing_autoloader() {
 		$error_msg = __( 'Please install composer in order to make <strong>SEO links Crawler</strong> working.', 'seo-links-crawler' );
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( wp_kses_post( $error_msg ) );
+			VipCompat::log_error( wp_kses_post( $error_msg ) );
 		}
 
 		add_action(
 			'admin_notices',
-			function() use ( $error_msg ) { ?>
+			function () use ( $error_msg ) { ?>
 			<div class="notice notice-error">
 				<p><?php echo wp_kses_post( $error_msg ); ?></p>
 			</div>
